@@ -126,14 +126,14 @@ def predict_single_image(image_path ,model=loaded_model_2, device: torch.device 
 
 from flaskWebSite.vgg19 import VGGUNET19
 
-#
 modelHV = VGGUNET19()
 
 
 # Load the entire checkpoint
 checkpoint = torch.load(
     "/Users/salmantas/Desktop/Py_Enviroments/vgg19_env/Heritage-Vision/VGGUnet19_Segmentation_best.pth.tar",
-    map_location=torch.device('cpu')
+    map_location=torch.device('cpu'),
+    weights_only=True # the annoyin warning is removed by loading only weights
 )
 
 # Extract only the model's state_dict

@@ -111,7 +111,7 @@ from flaskWebSite.vgg19 import VGGUNET19
 modelHV = VGGUNET19()
 
 # Load checkpoint using pathlib
-modelHV_path = Path("/Users/salmantas/Desktop/Py_Enviroments/vgg19_env/Heritage-Vision/models/VGGUnet19_Segmentation_best.pth")
+modelHV_path = Path("project_env/flaskWebSite/models/VGGUnet19_Segmentation_best.pth")
 checkpoint = torch.load(str(modelHV_path), map_location=torch.device('cpu'), weights_only=True)
 modelHV.load_state_dict(checkpoint)
 

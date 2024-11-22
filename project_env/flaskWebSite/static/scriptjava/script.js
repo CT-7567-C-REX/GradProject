@@ -16,12 +16,20 @@ if (filePreview) {
 }
 
 (function() {
+  const imageElement = document.getElementById("segmented-image");
+  const imageUrl = imageElement.src;
+
+  // Extract the relative path (e.g., /static/outputimgs/b86ae9c9f4382a9b.png)
+  const relativeImageUrl = imageUrl.replace(window.location.origin, ''); // Removes the domain part
+  
+  console.log(relativeImageUrl); // Check the result
+
     const canvas = new fabric.Canvas('canvas', {
       isDrawingMode: false  // Set drawing mode to off initially
     });
   
     // Set the background image for the canvas
-    fabric.Image.fromURL('/static/assets/KHAS.jpg', function(img) {
+    fabric.Image.fromURL(relativeImageUrl, function(img) {
       canvas.setBackgroundImage(img, canvas.renderAll.bind(canvas), {
         scaleX: canvas.width / img.width,
         scaleY: canvas.height / img.height

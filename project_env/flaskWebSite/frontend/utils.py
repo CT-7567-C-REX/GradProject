@@ -106,7 +106,7 @@ def predict_single_image(image_path, model=loaded_model_2, device=device):
 
 
 # VGG19 UNet model
-from flaskWebSite.vgg19 import VGGUNET19
+from flaskWebSite.frontend.vgg19 import VGGUNET19
 
 modelHV = VGGUNET19()
 

@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     
     {% if title %}
-        <title>{{ title }} - LoL</title>
+        <title>{{ title }}</title>
     {% else %}
-        <title>Netline</title>
+        <title>Khas</title>
     {% endif %}
 
 
@@ -32,7 +32,7 @@
         <div class="container">
             <nav class="navbar navbar-expand-lg bg-body-tertiary">
                 <div class="container-fluid">
-                    <a class="navbar-brand" href="{{url_for('home')}}">
+                    <a class="navbar-brand" href="{{url_for('frontend.home')}}">
                         <img src="{{ url_for('static', filename='assets/logo.svg') }}" alt="khas_logo" width="45" height="40">
                     </a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
@@ -44,13 +44,13 @@
                             <a class="nav-link active" aria-current="page" href="#">About Us</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link active" aria-current="page" href="{{url_for('classification')}}">Classification</a>
+                            <a class="nav-link active" aria-current="page" href="{{url_for('frontend.classification')}}">Classification</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link active" aria-current="page" href="{{url_for('drawing')}}">Drawing</a>
+                            <a class="nav-link active" aria-current="page" href="{{url_for('frontend.drawing')}}">Drawing</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link active" aria-current="page" href="{{url_for('rlhf')}}">Bizim Projemiz</a>
+                            <a class="nav-link active" aria-current="page" href="{{url_for('frontend.rlhf')}}">Bizim Projemiz</a>
                         </li>
                     </ul>
 

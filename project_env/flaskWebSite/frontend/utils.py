@@ -1,5 +1,4 @@
 from pathlib import Path
-import os
 import secrets
 from flaskWebSite import app
 import numpy as np
@@ -65,10 +64,8 @@ class FashionMNISTModelV2(nn.Module):
         return x
 
 
-if torch.backends.mps.is_available():
-    device = torch.device('mps')
-else:
-    device = torch.device('cpu')
+# Determine the device
+device = torch.device('cpu')
 
 # Load FashionMNISTModelV2
 loaded_model_2 = FashionMNISTModelV2(input_shape=3, 
@@ -76,8 +73,8 @@ loaded_model_2 = FashionMNISTModelV2(input_shape=3,
                                     output_shape=20)
 
 # Load the saved state_dict using pathlib
-model_path_2 = Path("project_env/flaskWebSite/models/03_pytorch_computer_vision_model_2.pth")
-loaded_model_2.load_state_dict(torch.load(str(model_path_2), weights_only=True))
+model_path_2 = Path(app.root_path) / "models" / "03_pytorch_computer_vision_model_2.pth"
+loaded_model_2.load_state_dict(torch.load(model_path_2, map_location=device))
 loaded_model_2 = loaded_model_2.to(device)
 
 # Transform setup
@@ -111,8 +108,8 @@ from flaskWebSite.frontend.vgg19 import VGGUNET19
 modelHV = VGGUNET19()
 
 # Load checkpoint using pathlib
-modelHV_path = Path("project_env/flaskWebSite/models/VGGUnet19_Segmentation_best.pth")
-checkpoint = torch.load(str(modelHV_path), map_location=torch.device('cpu'), weights_only=True)
+modelHV_path = Path(app.root_path) / "models" / "VGGUnet19_Segmentation_best.pth"
+checkpoint = torch.load(modelHV_path, map_location=device)
 modelHV.load_state_dict(checkpoint)
 
 # Visualize output

@@ -59,6 +59,12 @@ def drawing():
     return render_template("drawing.html", title='Drawing')
 
 
+@frontend.route("/apiproccess", methods=['GET', 'POST'])
+def apiproccess():
+
+    return render_template("apiproccess.html", title='Drawing')
+
+
 @frontend.route("/rlhf", methods=['GET', 'POST'])
 def rlhf():
     form = UploadImg()

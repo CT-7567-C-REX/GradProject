@@ -19,15 +19,13 @@
           <div class="mb-3 text-center">
               <img id="file-preview" class="img-fluid rounded" style="display: none; max-width: 100%; max-height: 512px;" alt="Image Preview">
           </div>
-          {% if outimgae %}
-          <div class="mb-3 text-center">
-              <img src="{{ url_for('static', filename='outputimgs/' + outimgae) }}" alt="Preview Uploaded Image" class="img-fluid border rounded mb-3" id="segmented-image" style="width: 100%; max-height: 300px; object-fit: contain;">
+          <!-- Display the predicted image if available -->
+          <div class="mb-3 text-center" id="predicted-image-container" style="display: none;">
+              <img id="segmented-image" class="img-fluid border rounded mb-3" style="width: 100%; max-height: 300px; object-fit: contain;">
           </div>
-          {% endif %}
     </div>
 
     <div class="col-md-6">
-      
       <div class="canvas-container">
         <canvas id="canvas" class="border" height="512" width="512"></canvas>
       </div>
@@ -49,49 +47,73 @@
     </div>
   </div>
 </div>
+
 <script>
-    // Upload Image
-document.getElementById('uploadForm').addEventListener('submit', async function (event) {
-  event.preventDefault(); // Stop form from refreshing the page
+    // Show image preview before upload
+    document.getElementById('img').addEventListener('change', function(event) {
+        const preview = document.getElementById('file-preview');
+        const file = event.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                preview.src = e.target.result;
+                preview.style.display = 'block'; // Show the preview image
+            };
+            reader.readAsDataURL(file);
+        }
+    });
 
-  const fileInput = document.getElementById('img');
-  const statusElement = document.getElementById('status');
-  statusElement.textContent = 'Uploading...';
+    // Handle image upload and prediction request
+    document.getElementById('uploadForm').addEventListener('submit', async function (event) {
+        event.preventDefault(); // Stop form from refreshing the page
 
-  if (fileInput.files.length === 0) {
-      statusElement.textContent = 'Please select an image.';
-      return;
-  }
+        const fileInput = document.getElementById('img');
+        const statusElement = document.getElementById('status');
+        const predictedImageContainer = document.getElementById('predicted-image-container');
+        const segmentedImage = document.getElementById('segmented-image');
+        
+        statusElement.textContent = 'Uploading...';
 
-  const file = fileInput.files[0];
-  const reader = new FileReader();
+        if (fileInput.files.length === 0) {
+            statusElement.textContent = 'Please select an image.';
+            return;
+        }
 
-  reader.onload = async function () {
-      const base64Image = reader.result.split(',')[1]; // Extract the base64 data
-      const payload = { image: base64Image };
+        const file = fileInput.files[0];
+        const reader = new FileReader();
 
-      try {
-          const response = await fetch('/upload', {
-              method: 'POST',
-              headers: {
-                  'Content-Type': 'application/json'
-              },
-              body: JSON.stringify(payload)
-          });
+        reader.onload = async function () {
+            const base64Image = reader.result.split(',')[1]; // Extract the base64 data
+            const payload = { image: base64Image };
 
-          if (response.ok) {
-              statusElement.textContent = 'Upload successful!';
-          } else {
-              statusElement.textContent = 'Upload failed!';
-          }
-      } catch (error) {
-          statusElement.textContent = 'Error: ' + error.message;
-      }
-  };
+            try {
+                // Send the base64 image to the /prediction endpoint for prediction
+                const response = await fetch('/prediction', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                });
 
-  reader.readAsDataURL(file); // Read the file as a data URL
-});
+                if (response.ok) {
+                    const data = await response.json();
+                    const predictedImageBase64 = data.image; // Assuming the server returns the base64 image
 
+                    // Display the predicted image
+                    segmentedImage.src = 'data:image/png;base64,' + predictedImageBase64;
+                    predictedImageContainer.style.display = 'block'; // Show the predicted image container
+                    statusElement.textContent = 'Upload successful!';
+                } else {
+                    statusElement.textContent = 'Upload failed!';
+                }
+            } catch (error) {
+                statusElement.textContent = 'Error: ' + error.message;
+            }
+        };
+
+        reader.readAsDataURL(file); // Read the file as a data URL
+    });
 </script>
 
 {% endblock %}

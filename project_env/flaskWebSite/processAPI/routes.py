@@ -1,11 +1,9 @@
 from flask import Blueprint, request, jsonify, url_for, send_from_directory
 import os
-from PIL import Image
-from io import BytesIO
-import base64
-from werkzeug.utils import secure_filename
 import random
-import uuid
+from flaskWebSite.processAPI.utils import convert_json_to_pil, save_picture, model_loader, generate, convert_pil_to_base64
+from pathlib import Path
+
 
 # Create Blueprint
 pep = Blueprint('pep', __name__)
@@ -25,26 +23,27 @@ def upload_image():
     try:
         # Parse JSON data
         data = request.get_json()
-        image_base64 = data.get('image')
 
-        if not image_base64:
-            return jsonify({'error': 'No image provided'}), 400
+        # Convert JSON image to PIL Image
+        image = convert_json_to_pil(data)
 
-        # Decode base64 image
-        image_data = base64.b64decode(image_base64)
-        image = Image.open(BytesIO(image_data))
+        # Define the save directory
+        save_directory = Path(__file__).parent / 'UPLOAD_FOLDER'
 
-        # Generate a unique filename
-        filename = f"{uuid.uuid4().hex}.png"
-        file_path = os.path.join(UPLOAD_FOLDER, secure_filename(filename))
+        # Save the image and get the filename
+        filename = save_picture(image, save_directory)
 
-        # Save the image
-        image.save(file_path)
+        return jsonify({
+            'message': 'Image uploaded and saved successfully',
+            'filename': filename,
+            'path': str(save_directory / filename)
+        }), 200
 
-        return jsonify({'message': 'Image uploaded successfully'}), 200
+    except ValueError as ve:
+        return jsonify({'error': str(ve)}), 400
 
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        return jsonify({'error': f"An unexpected error occurred: {str(e)}"}), 500
 
 # Route to fetch a random image
 @pep.route('/random-image', methods=['GET'])
@@ -76,3 +75,28 @@ def get_image(filename):
         return send_from_directory(UPLOAD_FOLDER, filename)
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+    
+from flaskWebSite.frontend.vgg19 import VGGUNET19 
+# get a prediction
+@pep.route('/prediction', methods=['GET', 'POST'])
+def prediction():
+    data = request.get_json()
+
+    # Convert the incoming JSON image data to a PIL image
+    image = convert_json_to_pil(data)
+
+    # Load the model
+    model = VGGUNET19()
+    base_dir = Path(__file__).resolve().parents[1] 
+    model_path = base_dir / "models" / "VGGUnet19_Segmentation_best.pth.tar"
+    model = model_loader(model, model_path)
+
+    # Generate the prediction
+    output_image = generate(image, model)
+
+    # Convert the output image to base64
+    output_base64 = convert_pil_to_base64(output_image)
+
+    # Return the base64-encoded image as JSON
+    return {"image": output_base64}
+

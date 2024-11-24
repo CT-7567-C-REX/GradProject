@@ -85,3 +85,8 @@ def rlhf():
         )
 
     return render_template("rlhf.html", form=form, title='Reinforcement Learning with Human Feedback')
+
+@frontend.route("/rlhfapi", methods=['GET', 'POST'])
+def rlhfapi():
+
+    return render_template("rlhfapi.html", title='rlhf')

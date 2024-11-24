@@ -74,7 +74,7 @@ loaded_model_2 = FashionMNISTModelV2(input_shape=3,
 
 # Load the saved state_dict using pathlib
 model_path_2 = Path(app.root_path) / "models" / "03_pytorch_computer_vision_model_2.pth"
-loaded_model_2.load_state_dict(torch.load(model_path_2, map_location=device))
+loaded_model_2.load_state_dict(torch.load(model_path_2, map_location=device, weights_only=True))
 loaded_model_2 = loaded_model_2.to(device)
 
 # Transform setup
@@ -107,10 +107,14 @@ from flaskWebSite.frontend.vgg19 import VGGUNET19
 
 modelHV = VGGUNET19()
 
+
 # Load checkpoint using pathlib
-modelHV_path = Path(app.root_path) / "models" / "VGGUnet19_Segmentation_best.pth"
-checkpoint = torch.load(modelHV_path, map_location=device)
-modelHV.load_state_dict(checkpoint)
+modelHV_path = Path(app.root_path) / "models" / "VGGUnet19_Segmentation_best.pth.tar"
+
+checkpoint = torch.load(modelHV_path, map_location=device, weights_only=True)
+model_state_dict = checkpoint["model_state_dict"]
+modelHV.load_state_dict(model_state_dict)
+
 
 # Visualize output
 def visualize_output(predictions, from_tensor=True):

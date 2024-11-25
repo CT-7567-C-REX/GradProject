@@ -14,9 +14,10 @@ if (filePreview) {
         }
     });
 }
+let canvas;
 
 (function() {
-  const canvas = new fabric.Canvas('canvas', {
+  canvas = new fabric.Canvas('canvas', {
     isDrawingMode: false  // Set drawing mode to off initially
   });
 
@@ -95,5 +96,59 @@ if (filePreview) {
 })();
 
 
+ // Handle image upload and prediction request
+document.getElementById('uploadForm').addEventListener('submit', async function (event) {
+  event.preventDefault(); // Stop form from refreshing the page
 
-  
+  const fileInput = document.getElementById('img');
+  const statusElement = document.getElementById('status');
+
+
+  statusElement.textContent = 'Uploading...';
+
+  if (fileInput.files.length === 0) {
+      statusElement.textContent = 'Please select an image.';
+      return;
+  }
+
+  const file = fileInput.files[0];
+  const reader = new FileReader();
+
+  reader.onload = async function () {
+      const base64Image = reader.result.split(',')[1]; // Extract the base64 data
+      const payload = { image: base64Image };
+
+      try {
+          // Send the base64 image to the /prediction endpoint for prediction
+          const response = await fetch('/prediction', {
+              method: 'POST',
+              headers: {
+                  'Content-Type': 'application/json'
+              },
+              body: JSON.stringify(payload)
+          });
+
+          if (response.ok) {
+              const data = await response.json();
+              const predictedImageBase64 = data.image; // Assuming the server returns the base64 image
+
+              statusElement.textContent = 'Upload successful!';
+
+              // Set the predicted image as the background of the canvas
+              fabric.Image.fromURL('data:image/png;base64,' + predictedImageBase64, function (img) {
+
+                  canvas.setBackgroundImage(img, canvas.renderAll.bind(canvas), {
+                      scaleX: canvas.width / img.width,
+                      scaleY: canvas.height / img.height
+                  });
+              });
+          } else {
+              statusElement.textContent = 'Upload failed!';
+          }
+      } catch (error) {
+          statusElement.textContent = 'Error: ' + error.message;
+      }
+  };
+
+  reader.readAsDataURL(file); // Read the file as a data URL
+});

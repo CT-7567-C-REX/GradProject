@@ -55,10 +55,10 @@
                             <a class="nav-link active" aria-current="page" href="{{url_for('frontend.rlhf')}}">Human Feedback Test</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link active" aria-current="page" href="{{url_for('frontend.apiproccess')}}">APi Test</a>
+                            <a class="nav-link active" aria-current="page" href="{{url_for('frontend.apiproccess')}}">API Test</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link active" aria-current="page" href="{{url_for('frontend.rlhfapi')}}">APi RLHF</a>
+                            <a class="nav-link active" aria-current="page" href="{{url_for('frontend.rlhfapi')}}">API RLHF</a>
                         </li>
                     </ul>
 
@@ -77,9 +77,7 @@
 
     </div>
     
-    <!-- <script defer src="{{ url_for('static', filename='scriptjava/fabric.js')}}"></script> -->
-
-    <script defer src="{{ url_for('static', filename='scriptjava/script.js')}}"></script>
+    <script defer type="module" src="{{ url_for('static', filename='scriptjava/script.js')}}"></script>
   
 </body>
 </html>

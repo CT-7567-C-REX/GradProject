@@ -21,44 +21,49 @@
         </div>
       </div>
       
-
       <div class="col-md-6">
         <div class="canvas-container mb-4">
           <canvas id="canvas" height="512" width="512"></canvas>
         </div>
+      
         <!-- Controls Section -->
-        <div class="p-3 border rounded bg-white ">
+        <div class="p-3 border rounded bg-white">
           <!-- Zoom Buttons -->
           <div class="mb-3 d-flex justify-content-center gap-2">
             <button id="zoom-in" class="btn btn-secondary">Zoom In</button>
             <button id="zoom-out" class="btn btn-secondary">Zoom Out</button>
+            <button id="toggle-pan-zoom" class="btn btn-secondary">Switch to Pan/Zoom Mode</button>
+
           </div>
+      
           <!-- Drawing Options -->
           <div class="row mb-3">
             <div class="col-6">
-                <label for="drawing-color" class="form-label">Drawing Color:</label>
-            <input type="color" id="drawing-color" class="form-control form-control-color" value="#000000" title="Choose your color">
+              <label for="drawing-color" class="form-label">Drawing Color:</label>
+              <input type="color" id="drawing-color" class="form-control form-control-color" value="#000000" title="Choose your color">
             </div>
             <div class="col-6">
-                <label for="drawing-line-width" class="form-label">Line Width:</label>
-                <input type="number" id="drawing-line-width" class="form-control" value="5" min="1" max="50">
+              <label for="drawing-line-width" class="form-label">Line Width:</label>
+              <input type="number" id="drawing-line-width" class="form-control" value="5" min="1" max="100">
             </div>
           </div>
       
-          <!-- Drawing Mode and Clear Canvas -->
+          <!-- Polygon Controls -->
           <div class="d-flex justify-content-center gap-2">
+            <button id="add-polygon" class="btn btn-primary">Add Polygon Points</button>
+            <button id="create-polygon" class="btn btn-success">Create Polygon</button>
+          </div>
+      
+          <!-- Drawing Mode and Clear Canvas -->
+          <div class="d-flex justify-content-center gap-2 mt-3">
             <button id="toggle-draw-mode" class="btn btn-primary">Enter Draw Mode</button>
             <button id="clear-canvas" class="btn btn-danger">Clear Canvas</button>
           </div>
         </div>
       </div>
       
+      
   </div>
 </div>
-
-<script>
-
-
-</script>
 
 {% endblock %}

@@ -1,15 +1,13 @@
 import { formDataToJson, sendToEndpoint, handleFilePreview } from './utils.js';
-
-handleFilePreview("input[type=file]", "#file-preview");
-
 import { setupCanvas } from './canvas.js';
 
-const canvasId = 'canvas';  // The ID of your canvas element
 
-// Initialize the canvas and capture the returned reference
-const canvas = setupCanvas(canvasId); // The returned 'canvas' is now available in main.js
+handleFilePreview("input[type=file]", "#file-preview"); // file preview
 
 
+const canvasId = 'canvas';  // canvas ID
+
+const canvas = setupCanvas(canvasId);
 
 
 document.getElementById('uploadForm').addEventListener('submit', async function (event) {

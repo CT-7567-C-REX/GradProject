@@ -28,6 +28,9 @@ export function setupCanvas(canvasId) {
   const togglePanZoomEl = document.getElementById('toggle-pan-zoom');
   const addPolygonBtn = document.getElementById('add-polygon');
   const createPolygonBtn = document.getElementById('create-polygon');
+  const centerCanvasBtn = document.getElementById('center-canvas');
+
+
 
   // Initialize drawing brush
   canvas.freeDrawingBrush.color = drawingColorEl.value;
@@ -42,7 +45,7 @@ export function setupCanvas(canvasId) {
       const activeObject = canvas.getActiveObject();
       if (activeObject) {
         if (activeObject.type === 'polygon' || activeObject.type === 'circle') {
-          activeObject.set({ fill: fillColor });
+          activeObject.set({ fill: fillColor, stroke: fillColor }); // Update both fill and stroke
         } else if (activeObject.type === 'path' || activeObject.type === 'line') {
           activeObject.set({ stroke: fillColor });
         }
@@ -50,6 +53,7 @@ export function setupCanvas(canvasId) {
       }
     }
   };
+  
 
   drawingLineWidthEl.onchange = function () {
     canvas.freeDrawingBrush.width = parseInt(this.value, 10) || 1;

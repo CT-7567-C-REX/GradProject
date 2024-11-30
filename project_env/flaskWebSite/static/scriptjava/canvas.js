@@ -30,8 +30,6 @@ export function setupCanvas(canvasId) {
   const createPolygonBtn = document.getElementById('create-polygon');
   const centerCanvasBtn = document.getElementById('center-canvas');
 
-
-
   // Initialize drawing brush
   canvas.freeDrawingBrush.color = drawingColorEl.value;
   canvas.freeDrawingBrush.width = parseInt(drawingLineWidthEl.value, 10) || 1;
@@ -53,7 +51,6 @@ export function setupCanvas(canvasId) {
       }
     }
   };
-  
 
   drawingLineWidthEl.onchange = function () {
     canvas.freeDrawingBrush.width = parseInt(this.value, 10) || 1;
@@ -72,6 +69,7 @@ export function setupCanvas(canvasId) {
       stroke: fillColor, // Use current color picker value
       selectable: true,
       objectCaching: false,
+      polygonNo: polygonCount,
     });
     canvas.add(polygon);
     polygonCount++;
@@ -98,6 +96,23 @@ export function setupCanvas(canvasId) {
       canvas.add(circle);
       points.push({ x: circle.left, y: circle.top });
       circleCount++;
+    }
+  });
+
+  canvas.on('object:moving', function (event) {
+    const movedCircle = event.target;
+    if (movedCircle.name === 'draggableCircle') {
+      const polygon = canvas.getObjects('polygon').find(p => p.polygonNo === movedCircle.polygonNo);
+      if (polygon) {
+        // Update the points of the polygon
+        const updatedPoints = polygon.points.map((point, index) => {
+          return index === movedCircle.circleNo - 1
+            ? { x: movedCircle.left, y: movedCircle.top }
+            : point;
+        });
+        polygon.set({ points: updatedPoints });
+        canvas.renderAll();
+      }
     }
   });
 
@@ -128,20 +143,18 @@ export function setupCanvas(canvasId) {
   // Zoom controls
   $(function () {
     $('#zoom-in').click(function () {
-    // Check if Pan/Zoom mode is active
-    if (panZoomMode) {
+      if (panZoomMode) {
         const newZoom = canvas.getZoom() * 1.1;
         canvas.setZoom(newZoom);
-    }
+      }
     });
 
     $('#zoom-out').click(function () {
-    // Check if Pan/Zoom mode is active
-    if (panZoomMode) {
-        const minZoomLevel = 0.5;  // Minimum zoom level
+      if (panZoomMode) {
+        const minZoomLevel = 0.5;
         const newZoom = canvas.getZoom() / 1.1;
         canvas.setZoom(newZoom > minZoomLevel ? newZoom : minZoomLevel);
-    }
+      }
     });
   });
 
@@ -151,12 +164,10 @@ export function setupCanvas(canvasId) {
   };
 
   clearEl.onclick = function () {
-    const activeObjects = canvas.getActiveObjects(); // Get all selected objects
-  if (activeObjects.length > 0) {
-    // Remove all selected objects
-    activeObjects.forEach(obj => canvas.remove(obj));
+    const activeObjects = canvas.getActiveObjects();
+    if (activeObjects.length > 0) {
+      activeObjects.forEach(obj => canvas.remove(obj));
     } else {
-      // Clear the entire canvas
       canvas.clear();
       fabric.Image.fromURL('/static/assets/KHAS.jpg', function (img) {
         canvas.setBackgroundImage(img, canvas.renderAll.bind(canvas), {
@@ -168,17 +179,17 @@ export function setupCanvas(canvasId) {
   };
 
   canvas.on('selection:created', function () {
-    clearEl.textContent = "Delete Selection"; // Update button text on selection
+    clearEl.textContent = "Delete Selection";
   });
-  
+
   canvas.on('selection:updated', function () {
-    clearEl.textContent = "Delete Selection"; // Ensure button text remains updated
+    clearEl.textContent = "Delete Selection";
   });
-  
+
   canvas.on('selection:cleared', function () {
-    clearEl.textContent = "Clear Canvas"; // Revert button text when no selection
+    clearEl.textContent = "Clear Canvas";
   });
-  
+
   canvas.on('mouse:down', function (e) {
     if (panZoomMode && !canvas.isDrawingMode) {
       canvas.__panning = true;

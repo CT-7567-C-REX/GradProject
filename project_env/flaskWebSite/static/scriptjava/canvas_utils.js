@@ -9,7 +9,7 @@ export function setCanvasBackground(canvas, imageUrl) {  // set the background i
     });
 }
 
-export function updateColorPickerFromObject(canvas, colorEl) {
+export function updateColorPickerFromObject(canvas, colorEl) { // if an object is selected update the color picker at the fronend
     const activeObject = canvas.getActiveObject();
     if (activeObject) {
       const currentColor = activeObject.fill || activeObject.stroke || '#000000';
@@ -18,22 +18,24 @@ export function updateColorPickerFromObject(canvas, colorEl) {
 }
 
 
-export function enablePanZoom(canvas, togglePanZoomEl, zoomInEl, zoomOutEl, panZoomMode) {
-    const minZoom = 0.5; // Minimum zoom level
-    const maxZoom = 3.0; // Maximum zoom level
+export function enablePanZoom(canvas, togglePanZoomEl, zoomInEl, zoomOutEl, panZoomMode, toggleDrawModeEl) {
+
+    const minZoom = 0.5; 
+    const maxZoom = 3.0; 
   
-    // Toggle Pan/Zoom mode
+    // change the button depend on the selected mode
     togglePanZoomEl.onclick = function () {
       panZoomMode = !panZoomMode;
       togglePanZoomEl.textContent = panZoomMode ? 'Exit Pan/Zoom Mode' : 'Enter Pan/Zoom Mode';
   
-      // Disable drawing mode when entering Pan/Zoom mode
+      // Disable drawing mode
       if (panZoomMode) {
         canvas.isDrawingMode = false;
+        toggleDrawModeEl.textContent = 'Enter Draw Mode'; // change the drawing mode btn state
       }
     };
   
-    // Mouse Down: Start Panning
+    // When Mouse Down
     canvas.on('mouse:down', function (e) {
       if (panZoomMode && !canvas.isDrawingMode) {
         canvas.__panning = true;
@@ -41,7 +43,7 @@ export function enablePanZoom(canvas, togglePanZoomEl, zoomInEl, zoomOutEl, panZ
       }
     });
   
-    // Mouse Move: Handle Panning
+    // When Mouse Moves
     canvas.on('mouse:move', function (e) {
       if (canvas.__panning) {
         const delta = new fabric.Point(e.e.movementX, e.e.movementY);
@@ -49,7 +51,7 @@ export function enablePanZoom(canvas, togglePanZoomEl, zoomInEl, zoomOutEl, panZ
       }
     });
   
-    // Mouse Up: End Panning
+    // When Mouse Up not pressing
     canvas.on('mouse:up', function () {
       canvas.__panning = false;
     });
@@ -69,7 +71,22 @@ export function enablePanZoom(canvas, togglePanZoomEl, zoomInEl, zoomOutEl, panZ
         canvas.setZoom(newZoom);
       }
     };
-  }
+}
+
+export function saveCanvas(canvas) {
+  
+    // Generate the image
+    const dataURL = canvas.toDataURL({
+      format: 'png', 
+      quality: 1.0,  // Adjust this for compression
+    });
+  
+    const link = document.createElement('a');
+    link.href = dataURL;
+    link.download = 'canvas-image.png'; // the file name
+    link.click();
+}
+  
   
   
   

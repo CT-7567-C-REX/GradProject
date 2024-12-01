@@ -1,4 +1,4 @@
-import { setCanvasBackground, updateColorPickerFromObject } from './canvas_utils.js';
+import { setCanvasBackground, updateColorPickerFromObject, enablePanZoom } from './canvas_utils.js';
 
 export function setupCanvas(canvasId) {
   // Initialize canvas
@@ -22,6 +22,8 @@ export function setupCanvas(canvasId) {
   const clearEl = document.getElementById('clear-canvas');
   const toggleDrawModeEl = document.getElementById('toggle-draw-mode');
   const togglePanZoomEl = document.getElementById('toggle-pan-zoom');
+  const zoomInEl = document.getElementById('zoom-in');
+  const zoomOutEl = document.getElementById('zoom-out');
   const addPolygonBtn = document.getElementById('add-polygon');
   const createPolygonBtn = document.getElementById('create-polygon');
   const centerCanvasBtn = document.getElementById('center-canvas');
@@ -165,29 +167,6 @@ export function setupCanvas(canvasId) {
     }
   };
 
-  // Zoom controls
-  $(function () {
-    $('#zoom-in').click(function () {
-      if (panZoomMode) {
-        const newZoom = canvas.getZoom() * 1.1;
-        canvas.setZoom(newZoom);
-      }
-    });
-
-    $('#zoom-out').click(function () {
-      if (panZoomMode) {
-        const minZoomLevel = 0.5;
-        const newZoom = canvas.getZoom() / 1.1;
-        canvas.setZoom(newZoom > minZoomLevel ? newZoom : minZoomLevel);
-      }
-    });
-  });
-
-  togglePanZoomEl.onclick = function () {
-    panZoomMode = !panZoomMode;
-    togglePanZoomEl.textContent = panZoomMode ? 'Exit Pan/Zoom Mode' : 'Enter Pan/Zoom Mode';
-  };
-
   clearEl.onclick = function () {
     const activeObjects = canvas.getActiveObjects();
     if (activeObjects.length > 0) {
@@ -211,9 +190,6 @@ export function setupCanvas(canvasId) {
   });
 
   canvas.on('mouse:down', function (e) {
-    if (panZoomMode && !canvas.isDrawingMode) {
-      canvas.__panning = true;
-    }
     if (startDrawingPolygon && !panZoomMode) {
       const pointer = canvas.getPointer(e.e);
       const circle = new fabric.Circle({
@@ -234,17 +210,6 @@ export function setupCanvas(canvasId) {
       points.push({ x: pointer.x, y: pointer.y }); // Add the point to the polygon
       canvas.add(circle); // Add the circle to the canvas
       circleCount++;
-    }
-  });
-
-  canvas.on('mouse:up', function () {
-    canvas.__panning = false;
-  });
-
-  canvas.on('mouse:move', function (e) {
-    if (canvas.__panning && e && e.e) {
-      const delta = new fabric.Point(e.e.movementX, e.e.movementY);
-      canvas.relativePan(delta);
     }
   });
 
@@ -277,6 +242,8 @@ export function setupCanvas(canvasId) {
     link.click();
   };
   
+  // Enable Pan/Zoom functionality
+  enablePanZoom(canvas, togglePanZoomEl, zoomInEl, zoomOutEl, panZoomMode);
 
   return canvas;
 }

@@ -5,9 +5,7 @@ import { setupCanvas } from './canvas.js';
 handleFilePreview("input[type=file]", "#file-preview"); // file preview
 
 
-const canvasId = 'canvas';  // canvas ID
-
-const canvas = setupCanvas(canvasId);
+const canvas = setupCanvas('canvas');
 
 
 document.getElementById('uploadForm').addEventListener('submit', async function (event) {

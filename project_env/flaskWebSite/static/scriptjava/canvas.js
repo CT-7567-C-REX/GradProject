@@ -1,16 +1,12 @@
+import { setCanvasBackground, updateColorPickerFromObject } from './canvas_utils.js';
+
 export function setupCanvas(canvasId) {
   // Initialize canvas
   const canvas = new fabric.Canvas(canvasId, {
     isDrawingMode: false,
   });
 
-  // Set the background image for the canvas
-  fabric.Image.fromURL('/static/assets/KHAS.jpg', function (img) {
-    canvas.setBackgroundImage(img, canvas.renderAll.bind(canvas), {
-      scaleX: canvas.width / img.width,
-      scaleY: canvas.height / img.height,
-    });
-  });
+  setCanvasBackground(canvas, '/static/assets/KHAS.jpg');
 
   // Variables
   let polygonCount = 1;
@@ -158,21 +154,8 @@ export function setupCanvas(canvasId) {
     }
   });
 
-  canvas.on('selection:created', updateColorPicker);
-  canvas.on('selection:updated', updateColorPicker);
-  canvas.on('selection:cleared', () => {
-    if (canvas.isDrawingMode) {
-      drawingColorEl.value = canvas.freeDrawingBrush.color;
-    }
-  });
-
-  function updateColorPicker() {
-    const activeObject = canvas.getActiveObject();
-    if (activeObject) {
-      const currentColor = activeObject.fill || activeObject.stroke || '#000000';
-      drawingColorEl.value = currentColor;
-    }
-  }
+  canvas.on('selection:created', () => updateColorPickerFromObject(canvas, drawingColorEl));
+  canvas.on('selection:updated', () => updateColorPickerFromObject(canvas, drawingColorEl));
 
   toggleDrawModeEl.onclick = function () {
     canvas.isDrawingMode = !canvas.isDrawingMode;
@@ -211,12 +194,7 @@ export function setupCanvas(canvasId) {
       activeObjects.forEach(obj => canvas.remove(obj));
     } else {
       canvas.clear();
-      fabric.Image.fromURL('/static/assets/KHAS.jpg', function (img) {
-        canvas.setBackgroundImage(img, canvas.renderAll.bind(canvas), {
-          scaleX: canvas.width / img.width,
-          scaleY: canvas.height / img.height,
-        });
-      });
+      setCanvasBackground(canvas, '/static/assets/KHAS.jpg');
     }
   };
 

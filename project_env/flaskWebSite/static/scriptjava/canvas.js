@@ -140,7 +140,7 @@ export function setupCanvas(canvasId) {
     canvas.renderAll();
   });
 
-  canvas.on('object:moving', function (event) {
+  canvas.on('object:moving', function (event) { // needs a fix here I gues.
     const movedCircle = event.target;
   
     if (movedCircle.name === 'draggableCircle') {
@@ -269,6 +269,36 @@ export function setupCanvas(canvasId) {
       canvas.relativePan(delta);
     }
   });
+
+  document.getElementById('save-canvas').onclick = function () {
+    // Filter out non-visible circles
+    const visibleObjects = canvas.getObjects().filter(obj => obj.visible);
+  
+    // Temporarily hide the invisible objects (e.g., circles)
+    canvas.getObjects('circle').forEach(circle => {
+      if (!circle.visible) {
+        circle.set({ visible: false });
+      }
+    });
+  
+    // Generate the image (only visible objects will be included)
+    const dataURL = canvas.toDataURL({
+      format: 'png', // or 'jpeg' if you prefer
+      quality: 1.0,  // Adjust this for compression
+    });
+  
+    // Reset visibility of circles after saving
+    canvas.getObjects('circle').forEach(circle => {
+      circle.set({ visible: true });
+    });
+  
+    // Optionally, you can create a downloadable link for the image
+    const link = document.createElement('a');
+    link.href = dataURL;
+    link.download = 'canvas-image.png'; // Customize the file name
+    link.click();
+  };
+  
 
   return canvas;
 }

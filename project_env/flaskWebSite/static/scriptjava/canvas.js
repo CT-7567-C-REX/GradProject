@@ -64,42 +64,73 @@ export function setupCanvas(canvasId) {
 
   createPolygonBtn.onclick = function () {
     if (points.length < 3) return;
-  
+
     // Create the polygon
     const polygon = new fabric.Polygon(points, {
-      fill: fillColor,
-      stroke: fillColor,
-      selectable: true,
-      objectCaching: false,
-      polygonNo: polygonCount,
+        fill: fillColor,
+        stroke: fillColor,
+        selectable: true,
+        objectCaching: false,
+        polygonNo: polygonCount,
     });
-  
-    // Hide the circles after creating the polygon
-    const circles = canvas.getObjects('circle').filter(c => c.polygonNo === polygonCount);
-    circles.forEach(circle => circle.visible = false);
-  
+
+    // Add the polygon to the canvas
     canvas.add(polygon);
+
+    // Calculate the center of the polygon
+    const centerX = points.reduce((sum, point) => sum + point.x, 0) / points.length;
+    const centerY = points.reduce((sum, point) => sum + point.y, 0) / points.length;
+
+    // Move circles slightly outward from the center
+    const offset = 20; // Adjust this value for how far the circles should be moved
+    const circles = canvas.getObjects('circle').filter(c => c.polygonNo === polygonCount);
+    circles.forEach((circle, index) => {
+        const dx = circle.left - centerX;
+        const dy = circle.top - centerY;
+        const magnitude = Math.sqrt(dx * dx + dy * dy);
+        if (magnitude > 0) {
+            circle.left += (dx / magnitude) * offset;
+            circle.top += (dy / magnitude) * offset;
+            circle.setCoords(); // Update the circle's bounding box
+        }
+        circle.visible = true; // Ensure circles are visible after creation
+    });
+
+    // Update the canvas after moving circles
+    canvas.renderAll();
+
     polygonCount++;
     startDrawingPolygon = false;
-  
+
     // Reset points array to prevent duplicate polygons
     points = [];
-  };
+};
+
+  function updateCirclesForSelectedPolygon() {
+    // Hide all circles first
+    canvas.getObjects('circle').forEach(circle => (circle.visible = false));
   
-  canvas.on('selection:created', function (e) {
     const activeObject = canvas.getActiveObject();
-  
     if (activeObject && activeObject.type === 'polygon') {
-      // Show the circles for the selected polygon
+      // Show the circles for the currently selected polygon
       const circles = canvas.getObjects('circle').filter(c => c.polygonNo === activeObject.polygonNo);
-      circles.forEach(circle => circle.visible = true);
+      circles.forEach(circle => (circle.visible = true));
   
-      // Prevent moving the polygon while editing
+      // Prevent the polygon from being moved while editing
       activeObject.selectable = false;
     }
-    canvas.renderAll();
-  });
   
+    canvas.renderAll();
+  }
+
+  canvas.on('selection:created', function () {
+    updateCirclesForSelectedPolygon();
+  });
+
+  canvas.on('selection:updated', function () {
+    updateCirclesForSelectedPolygon();
+  });
+
   canvas.on('selection:cleared', function () {
     // Hide all circles when selection is cleared
     canvas.getObjects('circle').forEach(circle => (circle.visible = false));
@@ -108,8 +139,7 @@ export function setupCanvas(canvasId) {
     canvas.getObjects('polygon').forEach(polygon => (polygon.selectable = true));
     canvas.renderAll();
   });
-  
-  // Prevent the polygon from moving when adjusting points
+
   canvas.on('object:moving', function (event) {
     const movedCircle = event.target;
   
@@ -203,7 +233,6 @@ export function setupCanvas(canvasId) {
   });
 
   canvas.on('mouse:down', function (e) {
-
     if (panZoomMode && !canvas.isDrawingMode) {
       canvas.__panning = true;
     }
@@ -229,6 +258,7 @@ export function setupCanvas(canvasId) {
       circleCount++;
     }
   });
+
   canvas.on('mouse:up', function () {
     canvas.__panning = false;
   });

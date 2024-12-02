@@ -15,9 +15,6 @@ export async function formDataToJson(fileInput) { // nut sure how this one works
     });
 }
 
-
-
-
 // Send data to an endpoint
 export async function sendToEndpoint(endpoint, data) {
     try {
@@ -39,9 +36,6 @@ export async function sendToEndpoint(endpoint, data) {
         throw error;
     }
 }
-
-
-// utils.js
 
 // Function to handle file preview
 export function handleFilePreview(fileInputSelector, previewElementSelector) {

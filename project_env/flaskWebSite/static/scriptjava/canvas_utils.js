@@ -18,7 +18,7 @@ export function updateColorPickerFromObject(canvas, colorEl) { // if an object i
 }
 
 
-export function enablePanZoom(canvas, togglePanZoomEl, zoomInEl, zoomOutEl, panZoomMode, toggleDrawModeEl) {
+export function enablePanZoom(canvas, togglePanZoomEl, zoomInEl, zoomOutEl, panZoomMode, toggleDrawModeEl) { // allow zoom in/out and pan
 
     const minZoom = 0.5; 
     const maxZoom = 3.0; 
@@ -73,7 +73,7 @@ export function enablePanZoom(canvas, togglePanZoomEl, zoomInEl, zoomOutEl, panZ
     };
 }
 
-export function saveCanvas(canvas) {
+export function saveCanvas(canvas) { // save the image
   
     // Generate the image
     const dataURL = canvas.toDataURL({
@@ -88,5 +88,23 @@ export function saveCanvas(canvas) {
 }
   
   
-  
+export function updateObjectColor(canvas, drawingColorEl, fillColor) { // this function change the color of the object from color picker after it's created
+    drawingColorEl.onchange = function () {
+      fillColor = this.value; // Update fillColor dynamically
+      if (canvas.isDrawingMode) {
+        canvas.freeDrawingBrush.color = fillColor;
+      } else {
+        const activeObject = canvas.getActiveObject();
+        if (activeObject) {
+          if (activeObject.type === 'polygon' || activeObject.type === 'circle') {
+            activeObject.set({ fill: fillColor, stroke: fillColor }); // Update both polygon and polygon border
+          } else if (activeObject.type === 'path' || activeObject.type === 'line') {
+            activeObject.set({ stroke: fillColor });
+          }
+          canvas.renderAll();
+        }
+      }
+    };
+}
+    
   

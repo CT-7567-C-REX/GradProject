@@ -1,4 +1,4 @@
-import { setCanvasBackground, updateColorPickerFromObject, enablePanZoom, saveCanvas } from './canvas_utils.js';
+import { setCanvasBackground, updateColorPickerFromObject, enablePanZoom, saveCanvas, updateObjectColor } from './canvas_utils.js';
 
 export function setupCanvas(canvasId) {
   // Initialize canvas
@@ -32,23 +32,7 @@ export function setupCanvas(canvasId) {
   canvas.freeDrawingBrush.color = drawingColorEl.value;
   canvas.freeDrawingBrush.width = parseInt(drawingLineWidthEl.value, 10) || 1;
 
-  // Event Handlers
-  drawingColorEl.onchange = function () {
-    fillColor = this.value; // Update fillColor dynamically
-    if (canvas.isDrawingMode) {
-      canvas.freeDrawingBrush.color = fillColor;
-    } else {
-      const activeObject = canvas.getActiveObject();
-      if (activeObject) {
-        if (activeObject.type === 'polygon' || activeObject.type === 'circle') {
-          activeObject.set({ fill: fillColor, stroke: fillColor }); // Update both fill and stroke
-        } else if (activeObject.type === 'path' || activeObject.type === 'line') {
-          activeObject.set({ stroke: fillColor });
-        }
-        canvas.renderAll();
-      }
-    }
-  };
+  updateObjectColor(canvas, drawingColorEl, fillColor);
 
   drawingLineWidthEl.onchange = function () {
     canvas.freeDrawingBrush.width = parseInt(this.value, 10) || 1;

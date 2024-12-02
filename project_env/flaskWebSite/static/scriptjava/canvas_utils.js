@@ -107,4 +107,22 @@ export function updateObjectColor(canvas, drawingColorEl, fillColor) { // this f
     };
 }
     
+
+export function updateCirclesForSelectedPolygon(canvas) { // show the red circles of the selected polygon only
+    // Hide all circles first
+    canvas.getObjects('circle').forEach(circle => (circle.visible = false));
+  
+    const activeObject = canvas.getActiveObject();
+    if (activeObject && activeObject.type === 'polygon') {
+      // Show the circles for the currently selected polygon
+      const circles = canvas.getObjects('circle').filter(c => c.polygonNo === activeObject.polygonNo);
+      circles.forEach(circle => (circle.visible = true));
+  
+      // Prevent the polygon from being moved while editing
+      activeObject.selectable = false;
+    }
+  
+    canvas.renderAll();
+}
+  
   

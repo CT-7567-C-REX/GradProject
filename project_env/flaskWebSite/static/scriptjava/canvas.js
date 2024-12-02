@@ -1,4 +1,4 @@
-import { setCanvasBackground, updateColorPickerFromObject, enablePanZoom, saveCanvas, updateObjectColor } from './canvas_utils.js';
+import { setCanvasBackground, updateColorPickerFromObject, enablePanZoom, saveCanvas, updateObjectColor, updateCirclesForSelectedPolygon } from './canvas_utils.js';
 
 export function setupCanvas(canvasId) {
   // Initialize canvas
@@ -88,30 +88,9 @@ export function setupCanvas(canvasId) {
     points = [];
 };
 
-  function updateCirclesForSelectedPolygon() {
-    // Hide all circles first
-    canvas.getObjects('circle').forEach(circle => (circle.visible = false));
-  
-    const activeObject = canvas.getActiveObject();
-    if (activeObject && activeObject.type === 'polygon') {
-      // Show the circles for the currently selected polygon
-      const circles = canvas.getObjects('circle').filter(c => c.polygonNo === activeObject.polygonNo);
-      circles.forEach(circle => (circle.visible = true));
-  
-      // Prevent the polygon from being moved while editing
-      activeObject.selectable = false;
-    }
-  
-    canvas.renderAll();
-  }
+  canvas.on('selection:created', () => updateCirclesForSelectedPolygon(canvas));
+  canvas.on('selection:updated', () => updateCirclesForSelectedPolygon(canvas));
 
-  canvas.on('selection:created', function () {
-    updateCirclesForSelectedPolygon();
-  });
-
-  canvas.on('selection:updated', function () {
-    updateCirclesForSelectedPolygon();
-  });
 
   canvas.on('selection:cleared', function () {
     // Hide all circles when selection is cleared

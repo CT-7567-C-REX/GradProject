@@ -96,3 +96,27 @@ def generate(image, model):
     output_image_pil = visualize_output(output)
     
     return output_image_pil
+
+def predict_single_image(image, model):
+    device = torch.device('cpu')
+    model = model.to(device)
+
+    transform = transforms.Compose(
+    [transforms.Resize((64, 64)),
+     transforms.ToTensor(),
+     transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225))])
+    
+    classes = ['Not sure', 'T-Shirt', 'Shoes', 'Shorts', 'Shirt', 'Pants', 'Skirt',
+           'Other', 'Top', 'Outwear', 'Dress', 'Body', 'Longsleeve', 
+           'Undershirt', 'Hat', 'Polo', 'Blouse', 'Hoodie', 'Skip', 'Blazer']
+    
+    image = transform(image)
+    image = image.unsqueeze(0).to(device)
+
+    model.eval()
+    with torch.inference_mode():
+        pred_logits = model(image)
+        pred_prob = torch.softmax(pred_logits.squeeze(), dim=0)
+    
+    pred_class = torch.argmax(pred_prob).item()
+    return classes[pred_class]

@@ -10,3 +10,5 @@ lib/
 include/
 pyvenv.cfg
 share/
+instance/
+var/

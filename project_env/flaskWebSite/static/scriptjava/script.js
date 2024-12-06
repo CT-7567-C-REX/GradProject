@@ -81,15 +81,18 @@ function initializeClassificationForm() {
         }
     });
 }
-// Handle User Feedback after Prediction
+
 function initializeFeedbackForm() {
     const feedbackForm = document.getElementById('feedback-form');
     const feedbackMessage = document.getElementById('feedback-message');
     const classSelection = document.getElementById('class-selection');
+    const feedbackOptions = document.querySelectorAll('input[name="feedback"]');
 
-    const classes = ['Not sure', 'T-Shirt', 'Shoes', 'Shorts', 'Shirt', 'Pants', 'Skirt',
-        'Other', 'Top', 'Outwear', 'Dress', 'Body', 'Longsleeve', 
-        'Undershirt', 'Hat', 'Polo', 'Blouse', 'Hoodie', 'Skip', 'Blazer'];
+    const classes = [
+        'Not sure', 'T-Shirt', 'Shoes', 'Shorts', 'Shirt', 'Pants', 'Skirt',
+        'Other', 'Top', 'Outwear', 'Dress', 'Body', 'Longsleeve',
+        'Undershirt', 'Hat', 'Polo', 'Blouse', 'Hoodie', 'Skip', 'Blazer'
+    ];
 
     // Populate the class selection dropdown with options
     if (classSelection) {
@@ -110,22 +113,58 @@ function initializeFeedbackForm() {
 
         if (!feedbackValue) return; // Exit if no feedback option is selected
 
-        // Handle the feedback response
         if (feedbackValue.value === 'correct') {
             feedbackMessage.textContent = 'Thank you for confirming the prediction!';
             feedbackMessage.style.color = 'green';
-        } else {
-            feedbackMessage.textContent = 'Thank you for your feedback. We will improve the model!';
-            feedbackMessage.style.color = 'red';
+            feedbackMessage.style.display = 'block';
+            feedbackForm.reset(); // Reset the form after submission
+            
+            return; // Do not send any request if the prediction is correct
         }
 
-        feedbackMessage.style.display = 'block'; // Show feedback message
+        // Validate that a class is selected when the prediction is incorrect
+        const selectedClass = classSelection.value;
+        if (!selectedClass) {
+            feedbackMessage.textContent = 'Please select a class if the prediction is incorrect.';
+            feedbackMessage.style.color = 'red';
+            feedbackMessage.style.display = 'block';
+            return; // Exit if no class is selected
+        }
+
+        // Prepare feedback data
+        const feedbackData = { correctClass: selectedClass };
+
+        // Send the feedback to the endpoint
+        fetch('/api/feedback', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(feedbackData),
+        })
+        .then(response => {
+            if (response.ok) {
+                feedbackMessage.textContent = 'Thank you for your feedback!';
+                feedbackMessage.style.color = 'green';
+            } else {
+                feedbackMessage.textContent = 'Error submitting feedback. Please try again.';
+                feedbackMessage.style.color = 'red';
+            }
+            feedbackMessage.style.display = 'block';
+        })
+        .catch(error => {
+            feedbackMessage.textContent = 'Network error. Please try again.';
+            feedbackMessage.style.color = 'red';
+            feedbackMessage.style.display = 'block';
+        });
+
         feedbackForm.reset(); // Reset the form after submission
+        classSelection.disabled = true; // Re-disable the dropdown
     });
 }
 
 // Initialize Feedback Form
 initializeFeedbackForm();
+
+
 
 
 // Initialize Forms

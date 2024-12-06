@@ -29,28 +29,29 @@
         </div>
     </div>
 
-    <!-- Feedback Section -->
-    <div id="feedback-section" style="display: none; margin-top: 20px;">
-        <h5>Is this prediction correct?</h5>
-        <form id="feedback-form">
-            <div>
-                <label>
-                    <input type="radio" name="feedback" value="correct" required> Yes
-                </label>
-            </div>
-            <div>
-                <label>
-                    <label for="class-selection" class="form-label">No the correct one is one of these:</label>
-                    <select id="class-selection" class="form-select">
-                        <option value="" disabled selected>Select a class</option>
-                        <!-- Dropdown options will be populated dynamically via JS -->
-                    </select>
-                </label>
-            </div>
-            <button type="submit" class="btn btn-primary mt-3">Submit</button>
-        </form>
-        <div id="feedback-message" style="margin-top: 10px;"></div>
-    </div>
+<!-- Feedback Section -->
+<div id="feedback-section" style="display: none; margin-top: 20px;">
+    <h5>Is this prediction correct?</h5>
+    <form id="feedback-form" novalidate>
+        <div>
+            <label>
+                <input type="radio" name="feedback" value="correct" required> Yes
+            </label>
+        </div>
+        <div>
+            <label>
+                <label for="class-selection" class="form-label">No, the correct one is one of these:</label>
+                <select id="class-selection" class="form-select">
+                    <option value=""  selected>Select a class</option>
+                    <!-- Dropdown options will be populated dynamically via JS -->
+                </select>
+            </label>
+        </div>
+        <button type="submit" class="btn btn-primary mt-3">Submit</button>
+    </form>
+    <div id="feedback-message" style="margin-top: 10px;"></div>
+</div>
+
 
 </div>
 

@@ -6,6 +6,25 @@ export function setupCanvas(canvasId) {
     isDrawingMode: false,
   });
 
+  var grid = 6;
+  var canvasSize = 512; 
+  var cellSize = canvasSize / grid; 
+
+  for (var i = 0; i <= grid; i++) {
+    // Vertical lines
+    canvas.add(new fabric.Line([i * cellSize, 0, i * cellSize, canvasSize], {
+      stroke: '#ccc',
+      selectable: false
+    }));
+  
+    // Horizontal lines
+    canvas.add(new fabric.Line([0, i * cellSize, canvasSize, i * cellSize], {
+      stroke: '#ccc',
+      selectable: false
+    }));
+  }
+
+
   setCanvasBackground(canvas, '/static/assets/KHAS.jpg');
 
   // Variables

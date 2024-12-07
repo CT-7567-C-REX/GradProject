@@ -1,4 +1,4 @@
-import { setCanvasBackground, updateColorPickerFromObject, enablePanZoom, saveCanvas, updateObjectColor, updateCirclesForSelectedPolygon } from './canvas_utils.js';
+import { setCanvasBackground, updateColorPickerFromObject, enablePanZoom, saveCanvas, updateObjectColor, updateCirclesForSelectedPolygon, drawGrid } from './canvas_utils.js';
 
 export function setupCanvas(canvasId) {
   // Initialize canvas
@@ -6,24 +6,9 @@ export function setupCanvas(canvasId) {
     isDrawingMode: false,
   });
 
-  var grid = 6;
-  var canvasSize = 512; 
-  var cellSize = canvasSize / grid; 
-
-  for (var i = 0; i <= grid; i++) {
-    // Vertical lines
-    canvas.add(new fabric.Line([i * cellSize, 0, i * cellSize, canvasSize], {
-      stroke: '#ccc',
-      selectable: false
-    }));
+  var grid = 5;
+  drawGrid(canvas, grid);
   
-    // Horizontal lines
-    canvas.add(new fabric.Line([0, i * cellSize, canvasSize, i * cellSize], {
-      stroke: '#ccc',
-      selectable: false
-    }));
-  }
-
 
   setCanvasBackground(canvas, '/static/assets/KHAS.jpg');
 

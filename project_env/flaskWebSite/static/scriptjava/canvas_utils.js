@@ -125,4 +125,24 @@ export function updateCirclesForSelectedPolygon(canvas) { // show the red circle
     canvas.renderAll();
 }
   
+export function drawGrid(canvas, grid) {
+  const canvasWidth = canvas.getWidth();
+  const canvasHeight = canvas.getHeight();
+  const cellWidth = canvasWidth / grid; // Horizontal cell size
+  const cellHeight = canvasHeight / grid; // Vertical cell size
+
+  for (let i = 0; i <= grid; i++) {
+    // Vertical lines
+    canvas.add(new fabric.Line([i * cellWidth, 0, i * cellWidth, canvasHeight], {
+      stroke: '#ccc',
+      selectable: false
+    }));
+
+    // Horizontal lines
+    canvas.add(new fabric.Line([0, i * cellHeight, canvasWidth, i * cellHeight], {
+      stroke: '#ccc',
+      selectable: false
+    }));
+  }
+}
   

@@ -164,8 +164,8 @@ export function drawGrid(canvas, grid) {
       });
 
       rect.on('mousedown', function () {
-        const row = this.data.row;
-        const col = this.data.col;
+        const row = this.data.col;
+        const col = this.data.row;
         const currentScore = gridMatrix[row][col];
 
         const newScore = parseInt(prompt(`Assign a score for cell (${row}, ${col}):`, currentScore), 10);

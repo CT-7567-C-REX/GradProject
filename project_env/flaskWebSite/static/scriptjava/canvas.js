@@ -1,5 +1,4 @@
-import { setCanvasBackground, updateColorPickerFromObject, enablePanZoom, saveCanvas, updateObjectColor,updateCirclesForSelectedPolygon, drawGrid } from './canvas_utils.js';
-
+import { setCanvasBackground, updateColorPickerFromObject, enablePanZoom, saveCanvas, updateObjectColor, updateCirclesForSelectedPolygon, drawGrid, createPolyControls, createObjectDefaultControls } from './canvas_utils.js';
 export function setupCanvas(canvasId) {
   // Initialize canvas
   const canvas = new fabric.Canvas(canvasId, {
@@ -8,7 +7,6 @@ export function setupCanvas(canvasId) {
 
   var grid = 5;
   drawGrid(canvas, grid);
-  
 
   setCanvasBackground(canvas, '/static/assets/KHAS.jpg');
 
@@ -19,6 +17,7 @@ export function setupCanvas(canvasId) {
   let points = [];
   let fillColor = "#000000"; // Default color
   let panZoomMode = false;
+  let editing = false;
 
   // Element references
   const drawingColorEl = document.getElementById('drawing-color');
@@ -42,105 +41,102 @@ export function setupCanvas(canvasId) {
     canvas.freeDrawingBrush.width = parseInt(this.value, 10) || 1;
   };
 
+  // This branch will be related to polygon stuff.
   addPolygonBtn.onclick = function () {
     startDrawingPolygon = true;
     points = [];
     circleCount = 1;
-};
+  };
 
-createPolygonBtn.onclick = function () {
-  if (points.length < 3) return;
+  createPolygonBtn.onclick = function () {
+    if (points.length < 3) return;
 
-  // Create the polygon
-  const polygon = new fabric.Polygon(points, {
+    // Create the polygon
+    const polygon = new fabric.Polygon(points, {
       fill: fillColor,
       stroke: fillColor,
       selectable: true,
       objectCaching: false,
       polygonNo: polygonCount,
-  });
+    });
 
-  // Add the polygon to the canvas
-  canvas.add(polygon);
+    // Add the polygon to the canvas
+    canvas.add(polygon);
+    canvas.getObjects('circle').forEach(circle => (circle.visible = false));
 
-  polygonCount++;
-  startDrawingPolygon = false;
+    polygonCount++;
+    startDrawingPolygon = false;
 
-  // Reset points array to prevent duplicate polygons
-  points = [];
+    // Reset points array to prevent duplicate polygons
+    points = [];
 
-  // Double-click to toggle edit mode for the polygon
-  polygon.on('mousedblclick', () => {
+
+  
+    
+    // Double-click to toggle edit mode for the polygon
+    polygon.on('mousedblclick', () => {
       editing = !editing;
       if (editing) {
-          polygon.cornerStyle = 'circle';
-          polygon.cornerColor = 'rgba(0,0,255,0.5)';
-          polygon.hasBorders = false;
-          polygon.controls = fabric.controlsUtils.createPolyControls(polygon);
+        // Enter edit mode
+        polygon.cornerStyle = 'circle';
+        polygon.cornerColor = 'rgba(0,0,255,0.5)';
+        polygon.hasBorders = false;
+        polygon.controls = createPolyControls(polygon);
       } else {
-          polygon.cornerColor = 'blue';
-          polygon.cornerStyle = 'rect';
-          polygon.hasBorders = true;
-          polygon.controls = fabric.controlsUtils.createObjectDefaultControls();
+        // Exit edit mode
+        polygon.cornerColor = 'blue';
+        polygon.cornerStyle = 'rect';
+        polygon.hasBorders = true;
+        polygon.controls = createObjectDefaultControls();
       }
       polygon.setCoords();
       canvas.requestRenderAll();
-  });
-};
+    });
+  };
 
-canvas.on('mouse:down', function (e) {
-  if (startDrawingPolygon && !panZoomMode) {
+  canvas.on('mouse:down', function (e) {
+    if (startDrawingPolygon && !panZoomMode) {
       const pointer = canvas.getPointer(e.e);
       const circle = new fabric.Circle({
-          left: pointer.x,
-          top: pointer.y,
-          radius: 5,
-          fill: 'red',
-          stroke: 'red',
-          strokeWidth: 1,
-          originX: 'center',
-          originY: 'center',
-          selectable: false, // Disable selection for circles
-          polygonNo: polygonCount, // Associate with the current polygon
-          circleNo: circleCount,   // Unique identifier for the circle in this polygon
+        left: pointer.x,
+        top: pointer.y,
+        radius: 5,
+        fill: 'red',
+        stroke: 'red',
+        strokeWidth: 1,
+        originX: 'center',
+        originY: 'center',
+        selectable: true, // Allow selection for circles
+        name: 'draggableCircle', // Identify as draggable circle
+        polygonNo: polygonCount, // Associate with the current polygon
+        circleNo: circleCount,   // Unique identifier for the circle in this polygon
       });
 
       points.push({ x: pointer.x, y: pointer.y }); // Add the point to the polygon
       canvas.add(circle); // Add the circle to the canvas
       circleCount++;
-  }
-});
-
-  canvas.on('selection:created', () => updateCirclesForSelectedPolygon(canvas));
-  canvas.on('selection:updated', () => updateCirclesForSelectedPolygon(canvas));
-
-
-  canvas.on('selection:cleared', function () {
-    // Hide all circles when selection is cleared
-    canvas.getObjects('circle').forEach(circle => (circle.visible = false));
-  
-    // Allow all polygons to be selectable again
-    canvas.getObjects('polygon').forEach(polygon => (polygon.selectable = true));
-    canvas.renderAll();
-  });
-
-  canvas.on('object:moving', function (event) { // needs a fix here I gues.
-    const movedCircle = event.target;
-  
-    if (movedCircle.name === 'draggableCircle') {
-      const polygon = canvas.getObjects('polygon').find(p => p.polygonNo === movedCircle.polygonNo);
-      if (polygon) {
-        // Update the points of the polygon dynamically
-        const updatedPoints = polygon.points.map((point, index) => {
-          return index === movedCircle.circleNo - 1
-            ? { x: movedCircle.left, y: movedCircle.top }
-            : point;
-        });
-        polygon.set({ points: updatedPoints });
-        canvas.renderAll();
-      }
     }
   });
+
+  // canvas.on('object:moving', function (event) {
+  //   const movedCircle = event.target;
+
+  //   // Only proceed if the moved object is a draggable circle
+  //   if (editing && movedCircle.name === 'draggableCircle') {
+  //     const polygon = canvas.getObjects('polygon').find(p => p.polygonNo === movedCircle.polygonNo);
+  //     if (polygon) {
+  //       // Update the polygon points based on the moved circle
+  //       const updatedPoints = polygon.points.map((point, index) => {
+  //         if (index === movedCircle.circleNo - 1) {
+  //           return { x: movedCircle.left, y: movedCircle.top }; // Update moved point
+  //         }
+  //         return point; // Keep other points unchanged
+  //       });
+  //       polygon.set({ points: updatedPoints });
+  //       canvas.renderAll();
+  //     }
+  //   }
+  // });
 
   canvas.on('selection:created', () => updateColorPickerFromObject(canvas, drawingColorEl));
   canvas.on('selection:updated', () => updateColorPickerFromObject(canvas, drawingColorEl));
@@ -178,7 +174,7 @@ canvas.on('mouse:down', function (e) {
   document.getElementById('save-canvas').onclick = function () {
     saveCanvas(canvas);
   };
-  
+
   // Enable Pan/Zoom
   enablePanZoom(canvas, togglePanZoomEl, zoomInEl, zoomOutEl, panZoomMode, toggleDrawModeEl);
 

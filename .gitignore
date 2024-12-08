@@ -12,3 +12,4 @@ pyvenv.cfg
 share/
 instance/
 var/
+Scripts/

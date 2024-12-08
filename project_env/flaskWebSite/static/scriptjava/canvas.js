@@ -1,4 +1,4 @@
-import { setCanvasBackground, updateColorPickerFromObject, enablePanZoom, saveCanvas, updateObjectColor, updateCirclesForSelectedPolygon, drawGrid } from './canvas_utils.js';
+import { setCanvasBackground, updateColorPickerFromObject, enablePanZoom, saveCanvas, updateObjectColor,updateCirclesForSelectedPolygon, drawGrid } from './canvas_utils.js';
 
 export function setupCanvas(canvasId) {
   // Initialize canvas
@@ -46,51 +46,70 @@ export function setupCanvas(canvasId) {
     startDrawingPolygon = true;
     points = [];
     circleCount = 1;
-  };
-
-  createPolygonBtn.onclick = function () {
-    if (points.length < 3) return;
-
-    // Create the polygon
-    const polygon = new fabric.Polygon(points, {
-        fill: fillColor,
-        stroke: fillColor,
-        selectable: true,
-        objectCaching: false,
-        polygonNo: polygonCount,
-    });
-
-    // Add the polygon to the canvas
-    canvas.add(polygon);
-
-    // Calculate the center of the polygon
-    const centerX = points.reduce((sum, point) => sum + point.x, 0) / points.length;
-    const centerY = points.reduce((sum, point) => sum + point.y, 0) / points.length;
-
-    // Move circles slightly outward from the center
-    const offset = 20; // Adjust this value for how far the circles should be moved
-    const circles = canvas.getObjects('circle').filter(c => c.polygonNo === polygonCount);
-    circles.forEach((circle, index) => {
-        const dx = circle.left - centerX;
-        const dy = circle.top - centerY;
-        const magnitude = Math.sqrt(dx * dx + dy * dy);
-        if (magnitude > 0) {
-            circle.left += (dx / magnitude) * offset;
-            circle.top += (dy / magnitude) * offset;
-            circle.setCoords(); // Update the circle's bounding box
-        }
-        circle.visible = true; // Ensure circles are visible after creation
-    });
-
-    // Update the canvas after moving circles
-    canvas.renderAll();
-
-    polygonCount++;
-    startDrawingPolygon = false;
-
-    // Reset points array to prevent duplicate polygons
-    points = [];
 };
+
+createPolygonBtn.onclick = function () {
+  if (points.length < 3) return;
+
+  // Create the polygon
+  const polygon = new fabric.Polygon(points, {
+      fill: fillColor,
+      stroke: fillColor,
+      selectable: true,
+      objectCaching: false,
+      polygonNo: polygonCount,
+  });
+
+  // Add the polygon to the canvas
+  canvas.add(polygon);
+
+  polygonCount++;
+  startDrawingPolygon = false;
+
+  // Reset points array to prevent duplicate polygons
+  points = [];
+
+  // Double-click to toggle edit mode for the polygon
+  polygon.on('mousedblclick', () => {
+      editing = !editing;
+      if (editing) {
+          polygon.cornerStyle = 'circle';
+          polygon.cornerColor = 'rgba(0,0,255,0.5)';
+          polygon.hasBorders = false;
+          polygon.controls = fabric.controlsUtils.createPolyControls(polygon);
+      } else {
+          polygon.cornerColor = 'blue';
+          polygon.cornerStyle = 'rect';
+          polygon.hasBorders = true;
+          polygon.controls = fabric.controlsUtils.createObjectDefaultControls();
+      }
+      polygon.setCoords();
+      canvas.requestRenderAll();
+  });
+};
+
+canvas.on('mouse:down', function (e) {
+  if (startDrawingPolygon && !panZoomMode) {
+      const pointer = canvas.getPointer(e.e);
+      const circle = new fabric.Circle({
+          left: pointer.x,
+          top: pointer.y,
+          radius: 5,
+          fill: 'red',
+          stroke: 'red',
+          strokeWidth: 1,
+          originX: 'center',
+          originY: 'center',
+          selectable: false, // Disable selection for circles
+          polygonNo: polygonCount, // Associate with the current polygon
+          circleNo: circleCount,   // Unique identifier for the circle in this polygon
+      });
+
+      points.push({ x: pointer.x, y: pointer.y }); // Add the point to the polygon
+      canvas.add(circle); // Add the circle to the canvas
+      circleCount++;
+  }
+});
 
   canvas.on('selection:created', () => updateCirclesForSelectedPolygon(canvas));
   canvas.on('selection:updated', () => updateCirclesForSelectedPolygon(canvas));
@@ -154,30 +173,6 @@ export function setupCanvas(canvasId) {
 
   canvas.on('selection:cleared', function () {
     clearEl.textContent = "Clear Canvas";
-  });
-
-  canvas.on('mouse:down', function (e) {
-    if (startDrawingPolygon && !panZoomMode) {
-      const pointer = canvas.getPointer(e.e);
-      const circle = new fabric.Circle({
-        left: pointer.x,
-        top: pointer.y,
-        radius: 5,
-        fill: 'red',
-        stroke: 'red',
-        strokeWidth: 1,
-        originX: 'center',
-        originY: 'center',
-        selectable: true,
-        name: 'draggableCircle',
-        polygonNo: polygonCount, // Associate with the current polygon
-        circleNo: circleCount,   // Unique identifier for the circle in this polygon
-      });
-
-      points.push({ x: pointer.x, y: pointer.y }); // Add the point to the polygon
-      canvas.add(circle); // Add the circle to the canvas
-      circleCount++;
-    }
   });
 
   document.getElementById('save-canvas').onclick = function () {

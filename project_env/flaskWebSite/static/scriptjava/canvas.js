@@ -1,4 +1,4 @@
-import { setCanvasBackground, updateColorPickerFromObject, enablePanZoom, saveCanvas, updateObjectColor, updateCirclesForSelectedPolygon, drawGrid } from './canvas_utils.js';
+import { setCanvasBackground, updateColorPickerFromObject, enablePanZoom, saveCanvas, updateObjectColor, updateCirclesForSelectedPolygon, drawGrid, createPolyControls, createObjectDefaultControls } from './canvas_utils.js';
 export function setupCanvas(canvasId) {
   // Initialize canvas
   const canvas = new fabric.Canvas(canvasId, {
@@ -69,65 +69,8 @@ export function setupCanvas(canvasId) {
 
     // Reset points array to prevent duplicate polygons
     points = [];
-    fabric.controlsUtils.createPolyControls = function (polygon, options = {}) {
-      const controls = {};
-      for (let i = 0; i < polygon.points.length; i++) {
-        controls[`p${i}`] = new fabric.Control({
-          positionHandler: function (dim, finalMatrix, fabricObject) {
-            const point = fabricObject.points[i];
-            return fabric.util.transformPoint(
-              { x: point.x - fabricObject.pathOffset.x, y: point.y - fabricObject.pathOffset.y },
-              fabricObject.calcTransformMatrix()
-            );
-          },
-          actionHandler: function (eventData, transform, x, y) {
-            const fabricObject = transform.target;
-            fabricObject.points[i].x = x;
-            fabricObject.points[i].y = y;
-            fabricObject._calcDimensions();
-            fabricObject.setCoords();
-            return true;
-          },
-          actionName: 'modifyPolygonPoint',
-        });
-      }
-      return controls;
-    };
-    fabric.controlsUtils.createObjectDefaultControls = function () {
-      return {
-          tl: new fabric.Control({
-              x: -0.5,
-              y: -0.5,
-              cursorStyle: 'nwse-resize',
-              actionHandler: fabric.controlsUtils.scalingEqually,
-          }),
-          tr: new fabric.Control({
-              x: 0.5,
-              y: -0.5,
-              cursorStyle: 'nesw-resize',
-              actionHandler: fabric.controlsUtils.scalingEqually,
-          }),
-          bl: new fabric.Control({
-              x: -0.5,
-              y: 0.5,
-              cursorStyle: 'nesw-resize',
-              actionHandler: fabric.controlsUtils.scalingEqually,
-          }),
-          br: new fabric.Control({
-              x: 0.5,
-              y: 0.5,
-              cursorStyle: 'nwse-resize',
-              actionHandler: fabric.controlsUtils.scalingEqually,
-          }),
-          mtr: new fabric.Control({
-              x: 0,
-              y: -0.5,
-              offsetY: -40,
-              cursorStyle: 'crosshair',
-              actionHandler: fabric.controlsUtils.rotationWithSnapping,
-          }),
-      };
-  };
+
+
   
     
     // Double-click to toggle edit mode for the polygon
@@ -138,13 +81,13 @@ export function setupCanvas(canvasId) {
         polygon.cornerStyle = 'circle';
         polygon.cornerColor = 'rgba(0,0,255,0.5)';
         polygon.hasBorders = false;
-        polygon.controls = fabric.controlsUtils.createPolyControls(polygon);
+        polygon.controls = createPolyControls(polygon);
       } else {
         // Exit edit mode
         polygon.cornerColor = 'blue';
         polygon.cornerStyle = 'rect';
         polygon.hasBorders = true;
-        polygon.controls = fabric.controlsUtils.createObjectDefaultControls();
+        polygon.controls = createObjectDefaultControls();
       }
       polygon.setCoords();
       canvas.requestRenderAll();

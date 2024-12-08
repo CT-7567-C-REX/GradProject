@@ -190,4 +190,68 @@ export function drawGrid(canvas, grid) {
   return gridMatrix;
 }
 
-  
+  // Define the function to create poly controls
+export function createPolyControls(polygon, options = {}) {
+  const controls = {};
+  for (let i = 0; i < polygon.points.length; i++) {
+    controls[`p${i}`] = new fabric.Control({
+      positionHandler: function (dim, finalMatrix, fabricObject) {
+        const point = fabricObject.points[i];
+        return fabric.util.transformPoint(
+          { x: point.x - fabricObject.pathOffset.x, y: point.y - fabricObject.pathOffset.y },
+          fabricObject.calcTransformMatrix()
+        );
+      },
+      actionHandler: function (eventData, transform, x, y) {
+        const fabricObject = transform.target;
+        fabricObject.points[i].x = x;
+        fabricObject.points[i].y = y;
+        fabricObject._calcDimensions();
+        fabricObject.setCoords();
+        return true;
+      },
+      actionName: 'modifyPolygonPoint',
+    });
+  }
+
+  // Ensure the coordinates are recalculated for the control points
+  polygon.setCoords();
+  return controls;
+}
+
+// Define the function to create default object controls
+export function createObjectDefaultControls() {
+  return {
+    tl: new fabric.Control({
+      x: -0.5,
+      y: -0.5,
+      cursorStyle: 'nwse-resize',
+      actionHandler: fabric.controlsUtils.scalingEqually,
+    }),
+    tr: new fabric.Control({
+      x: 0.5,
+      y: -0.5,
+      cursorStyle: 'nesw-resize',
+      actionHandler: fabric.controlsUtils.scalingEqually,
+    }),
+    bl: new fabric.Control({
+      x: -0.5,
+      y: 0.5,
+      cursorStyle: 'nesw-resize',
+      actionHandler: fabric.controlsUtils.scalingEqually,
+    }),
+    br: new fabric.Control({
+      x: 0.5,
+      y: 0.5,
+      cursorStyle: 'nwse-resize',
+      actionHandler: fabric.controlsUtils.scalingEqually,
+    }),
+    mtr: new fabric.Control({
+      x: 0,
+      y: -0.5,
+      offsetY: -40,
+      cursorStyle: 'crosshair',
+      actionHandler: fabric.controlsUtils.rotationWithSnapping,
+    }),
+  };
+}

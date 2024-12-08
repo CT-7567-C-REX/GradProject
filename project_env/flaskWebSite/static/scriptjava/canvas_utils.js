@@ -128,21 +128,66 @@ export function updateCirclesForSelectedPolygon(canvas) { // show the red circle
 export function drawGrid(canvas, grid) {
   const canvasWidth = canvas.getWidth();
   const canvasHeight = canvas.getHeight();
-  const cellWidth = canvasWidth / grid; // Horizontal cell size
-  const cellHeight = canvasHeight / grid; // Vertical cell size
+  const cellWidth = canvasWidth / grid;
+  const cellHeight = canvasHeight / grid;
 
-  for (let i = 0; i <= grid; i++) {
-    // Vertical lines
-    canvas.add(new fabric.Line([i * cellWidth, 0, i * cellWidth, canvasHeight], {
-      stroke: '#ccc',
-      selectable: false
-    }));
+  const gridMatrix = Array.from({ length: grid }, () => Array(grid).fill(0));
 
-    // Horizontal lines
-    canvas.add(new fabric.Line([0, i * cellHeight, canvasWidth, i * cellHeight], {
-      stroke: '#ccc',
-      selectable: false
-    }));
+  // Reference to the HTML table
+  const gridTable = document.getElementById('gridTable');
+
+  // Populate the table dynamically
+  gridTable.innerHTML = '';
+  for (let i = 0; i < grid; i++) {
+    const row = gridTable.insertRow();
+    for (let j = 0; j < grid; j++) {
+      const cell = row.insertCell();
+      cell.textContent = gridMatrix[i][j]; // Initialize with 0
+      cell.className = 'align-middle'; // Center-align Bootstrap class
+      cell.style.minWidth = '50px'; // Optional: Adjust cell size
+    }
   }
+
+  for (let i = 0; i < grid; i++) {
+    for (let j = 0; j < grid; j++) {
+      const rect = new fabric.Rect({
+        left: i * cellWidth,
+        top: j * cellHeight,
+        width: cellWidth,
+        height: cellHeight,
+        fill: 'transparent',
+        stroke: '#ccc',
+        selectable: false,
+        hasBorders: false,
+        hasControls: false,
+        data: { row: i, col: j }
+      });
+
+      rect.on('mousedown', function () {
+        const row = this.data.row;
+        const col = this.data.col;
+        const currentScore = gridMatrix[row][col];
+
+        const newScore = parseInt(prompt(`Assign a score for cell (${row}, ${col}):`, currentScore), 10);
+
+        if (!isNaN(newScore)) {
+          gridMatrix[row][col] = newScore;
+          console.log(`Updated cell (${row}, ${col}) with score: ${newScore}`);
+
+          // Update the corresponding table cell
+          gridTable.rows[row].cells[col].textContent = newScore;
+        }
+        // Explicitly reset canvas state
+        canvas.selection = false; // Disable selection temporarily
+        canvas.discardActiveObject(); // Deselect any active objects
+        canvas.renderAll(); // Re-render canvas to reflect changes
+      });
+
+      canvas.add(rect);
+    }
+  }
+  
+  return gridMatrix;
 }
+
   

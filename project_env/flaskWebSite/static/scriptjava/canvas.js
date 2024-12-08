@@ -41,7 +41,7 @@ export function setupCanvas(canvasId) {
   drawingLineWidthEl.onchange = function () {
     canvas.freeDrawingBrush.width = parseInt(this.value, 10) || 1;
   };
-
+// this branch will be related to polygon stuff.
   addPolygonBtn.onclick = function () {
     startDrawingPolygon = true;
     points = [];

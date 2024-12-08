@@ -93,6 +93,42 @@ export function setupCanvas(canvasId) {
       }
       return controls;
     };
+    fabric.controlsUtils.createObjectDefaultControls = function () {
+      return {
+          tl: new fabric.Control({
+              x: -0.5,
+              y: -0.5,
+              cursorStyle: 'nwse-resize',
+              actionHandler: fabric.controlsUtils.scalingEqually,
+          }),
+          tr: new fabric.Control({
+              x: 0.5,
+              y: -0.5,
+              cursorStyle: 'nesw-resize',
+              actionHandler: fabric.controlsUtils.scalingEqually,
+          }),
+          bl: new fabric.Control({
+              x: -0.5,
+              y: 0.5,
+              cursorStyle: 'nesw-resize',
+              actionHandler: fabric.controlsUtils.scalingEqually,
+          }),
+          br: new fabric.Control({
+              x: 0.5,
+              y: 0.5,
+              cursorStyle: 'nwse-resize',
+              actionHandler: fabric.controlsUtils.scalingEqually,
+          }),
+          mtr: new fabric.Control({
+              x: 0,
+              y: -0.5,
+              offsetY: -40,
+              cursorStyle: 'crosshair',
+              actionHandler: fabric.controlsUtils.rotationWithSnapping,
+          }),
+      };
+  };
+  
     
     // Double-click to toggle edit mode for the polygon
     polygon.on('mousedblclick', () => {
@@ -139,25 +175,25 @@ export function setupCanvas(canvasId) {
     }
   });
 
-  canvas.on('object:moving', function (event) {
-    const movedCircle = event.target;
+  // canvas.on('object:moving', function (event) {
+  //   const movedCircle = event.target;
 
-    // Only proceed if the moved object is a draggable circle
-    if (editing && movedCircle.name === 'draggableCircle') {
-      const polygon = canvas.getObjects('polygon').find(p => p.polygonNo === movedCircle.polygonNo);
-      if (polygon) {
-        // Update the polygon points based on the moved circle
-        const updatedPoints = polygon.points.map((point, index) => {
-          if (index === movedCircle.circleNo - 1) {
-            return { x: movedCircle.left, y: movedCircle.top }; // Update moved point
-          }
-          return point; // Keep other points unchanged
-        });
-        polygon.set({ points: updatedPoints });
-        canvas.renderAll();
-      }
-    }
-  });
+  //   // Only proceed if the moved object is a draggable circle
+  //   if (editing && movedCircle.name === 'draggableCircle') {
+  //     const polygon = canvas.getObjects('polygon').find(p => p.polygonNo === movedCircle.polygonNo);
+  //     if (polygon) {
+  //       // Update the polygon points based on the moved circle
+  //       const updatedPoints = polygon.points.map((point, index) => {
+  //         if (index === movedCircle.circleNo - 1) {
+  //           return { x: movedCircle.left, y: movedCircle.top }; // Update moved point
+  //         }
+  //         return point; // Keep other points unchanged
+  //       });
+  //       polygon.set({ points: updatedPoints });
+  //       canvas.renderAll();
+  //     }
+  //   }
+  // });
 
   canvas.on('selection:created', () => updateColorPickerFromObject(canvas, drawingColorEl));
   canvas.on('selection:updated', () => updateColorPickerFromObject(canvas, drawingColorEl));

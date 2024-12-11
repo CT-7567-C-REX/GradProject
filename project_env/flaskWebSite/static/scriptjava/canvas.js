@@ -1,4 +1,5 @@
 import { setCanvasBackground, updateColorPickerFromObject, enablePanZoom, saveCanvas, updateObjectColor, updateCirclesForSelectedPolygon, drawGrid, createPolyControls, createObjectDefaultControls } from './canvas_utils.js';
+// This branch will be related to bbox.
 export function setupCanvas(canvasId) {
   // Initialize canvas
   const canvas = new fabric.Canvas(canvasId, {
@@ -6,7 +7,7 @@ export function setupCanvas(canvasId) {
   });
 
   var grid = 5;
-  drawGrid(canvas, grid);
+  //drawGrid(canvas, grid);
 
   setCanvasBackground(canvas, '/static/assets/KHAS.jpg');
 
@@ -41,7 +42,6 @@ export function setupCanvas(canvasId) {
     canvas.freeDrawingBrush.width = parseInt(this.value, 10) || 1;
   };
 
-  // This branch will be related to polygon stuff.
   addPolygonBtn.onclick = function () {
     startDrawingPolygon = true;
     points = [];
@@ -101,8 +101,8 @@ export function setupCanvas(canvasId) {
         left: pointer.x,
         top: pointer.y,
         radius: 5,
-        fill: 'red',
-        stroke: 'red',
+        fill: 'black',
+        stroke: 'black',
         strokeWidth: 1,
         originX: 'center',
         originY: 'center',

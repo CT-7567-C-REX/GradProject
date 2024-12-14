@@ -1,4 +1,17 @@
 
+export function initializeCenterCanvas(canvas, centerCanvasBtn) {
+  // Başlangıç pozisyonu ve zoom seviyesini kaydet
+  const initialZoom = canvas.getZoom(); // Mevcut zoom seviyesini al
+  const initialViewportTransform = [...canvas.viewportTransform]; // Canvas'ın başlangıç transform matrisini al
+
+  // Center Canvas işlevi
+  centerCanvasBtn.onclick = function () {
+    canvas.setZoom(initialZoom); // Zoom'u başlangıç seviyesine sıfırla
+    canvas.viewportTransform = [...initialViewportTransform]; // Transform'u başlangıç değerine döndür
+    canvas.renderAll(); // Canvas'ı yeniden çiz
+  };
+}
+
 
 export function setCanvasBackground(canvas, imageUrl) {  // set the background image for canvas
     fabric.Image.fromURL(imageUrl, function (img) {

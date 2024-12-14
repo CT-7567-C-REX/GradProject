@@ -1,4 +1,4 @@
-import { setCanvasBackground, updateColorPickerFromObject, enablePanZoom, saveCanvas, updateObjectColor, updateCirclesForSelectedPolygon, drawGrid, createPolyControls, createObjectDefaultControls } from './canvas_utils.js';
+import { setCanvasBackground, updateColorPickerFromObject, enablePanZoom, saveCanvas, updateObjectColor, updateCirclesForSelectedPolygon, drawGrid, createPolyControls, createObjectDefaultControls, initializeCenterCanvas } from './canvas_utils.js';
 export function setupCanvas(canvasId) {
   // Initialize canvas
   const canvas = new fabric.Canvas(canvasId, {
@@ -118,6 +118,8 @@ export function setupCanvas(canvasId) {
     }
   });
 
+  initializeCenterCanvas(canvas, centerCanvasBtn);
+
   // canvas.on('object:moving', function (event) {
   //   const movedCircle = event.target;
 
@@ -175,17 +177,6 @@ export function setupCanvas(canvasId) {
     saveCanvas(canvas);
   };
 
-    // Başlangıç pozisyonu ve zoom seviyesini kaydet
-    const initialZoom = canvas.getZoom(); // Mevcut zoom seviyesini al
-    const initialViewportTransform = [...canvas.viewportTransform]; // Canvas'ın başlangıç transform matrisini al
-    
-    // Center Canvas işlevi
-    centerCanvasBtn.onclick = function () {
-      canvas.setZoom(initialZoom); // Zoom'u başlangıç seviyesine sıfırla
-      canvas.viewportTransform = [...initialViewportTransform]; // Transform'u başlangıç değerine döndür
-      canvas.renderAll(); // Canvas'ı yeniden çiz
-    };
-  
   // Enable Pan/Zoom
   enablePanZoom(canvas, togglePanZoomEl, zoomInEl, zoomOutEl, panZoomMode, toggleDrawModeEl);
 

@@ -18,22 +18,54 @@ export function updateColorPickerFromObject(canvas, colorEl) { // if an object i
 }
 
 
-export function enablePanZoom(canvas, togglePanZoomEl, zoomInEl, zoomOutEl, panZoomMode, toggleDrawModeEl) {
-  const minZoom = 0.5;
-  const maxZoom = 3.0;
+export function enablePanZoom(canvas, togglePanZoomEl, zoomInEl, zoomOutEl, panZoomMode, toggleDrawModeEl, image) {
+  let minZoom = 1; // Initialize minZoom with a default fallback
+
+  function calculateMinZoom() {
+      if (image && image.width && image.height) {
+          minZoom = Math.max(canvas.width / image.width, canvas.height / image.height);
+          enforceZoomBoundaries();
+          centerImage();
+      }
+  }
+
+  function centerImage() {
+      if (image && minZoom !== undefined) {
+          const offsetX = (canvas.width - image.width * minZoom) / 2;
+          const offsetY = (canvas.height - image.height * minZoom) / 2;
+          canvas.viewportTransform = [minZoom, 0, 0, minZoom, offsetX, offsetY];
+          canvas.requestRenderAll();
+      }
+  }
+
+  function enforceZoomBoundaries() {
+      const currentZoom = canvas.getZoom();
+      if (currentZoom < minZoom) {
+          canvas.setZoom(minZoom);
+          centerImage();
+      }
+  }
+
+  if (image) {
+      image.onload = () => {
+          calculateMinZoom();
+      };
+  } else {
+      calculateMinZoom();
+  }
+
+  const maxZoom = 10.0; // Maximum zoom level
 
   togglePanZoomEl.onclick = function () {
       panZoomMode = !panZoomMode;
       togglePanZoomEl.textContent = panZoomMode ? 'Exit Pan/Zoom Mode' : 'Enter Pan/Zoom Mode';
 
-      // Disable drawing mode
       if (panZoomMode) {
           canvas.isDrawingMode = false;
           toggleDrawModeEl.textContent = 'Enter Draw Mode';
       }
   };
 
-  // Handle mouse wheel zoom
   canvas.on('mouse:wheel', function (opt) {
       if (!panZoomMode) return;
 
@@ -47,14 +79,16 @@ export function enablePanZoom(canvas, togglePanZoomEl, zoomInEl, zoomOutEl, panZ
 
       opt.e.preventDefault();
       opt.e.stopPropagation();
+
+      enforceZoomBoundaries();
   });
 
-  // Adjust zoom in and out using buttons
   zoomInEl.onclick = function () {
       if (panZoomMode) {
           const center = canvas.getCenter();
           const newZoom = Math.min(canvas.getZoom() * 1.1, maxZoom);
           canvas.zoomToPoint(new fabric.Point(center.left, center.top), newZoom);
+          enforceZoomBoundaries();
       }
   };
 
@@ -63,10 +97,10 @@ export function enablePanZoom(canvas, togglePanZoomEl, zoomInEl, zoomOutEl, panZ
           const center = canvas.getCenter();
           const newZoom = Math.max(canvas.getZoom() / 1.1, minZoom);
           canvas.zoomToPoint(new fabric.Point(center.left, center.top), newZoom);
+          enforceZoomBoundaries();
       }
   };
 
-  // Panning functionality
   canvas.on('mouse:down', function (e) {
       if (panZoomMode && !canvas.isDrawingMode) {
           canvas.__panning = true;
@@ -83,6 +117,10 @@ export function enablePanZoom(canvas, togglePanZoomEl, zoomInEl, zoomOutEl, panZ
 
   canvas.on('mouse:up', function () {
       canvas.__panning = false;
+  });
+
+  canvas.on('after:render', function () {
+      enforceZoomBoundaries();
   });
 }
 

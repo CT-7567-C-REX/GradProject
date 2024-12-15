@@ -6,7 +6,7 @@ export function setupCanvas(canvasId) {
   });
 
   var grid = 5;
-  drawGrid(canvas, grid);
+  //drawGrid(canvas, grid);
 
   setCanvasBackground(canvas, '/static/assets/KHAS.jpg');
 

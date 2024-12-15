@@ -22,14 +22,13 @@ export function setCanvasBackground(canvas, imageUrl) {  // set the background i
     });
 }
 
-export function updateColorPickerFromObject(canvas, colorEl) { // if an object is selected update the color picker at the fronend
-    const activeObject = canvas.getActiveObject();
-    if (activeObject) {
-      const currentColor = activeObject.fill || activeObject.stroke || '#000000';
-      colorEl.value = currentColor;
-    }
+export function updateColorPickerFromObject(canvas, colorEl) {
+  const activeObject = canvas.getActiveObject();
+  if (activeObject) {
+    const currentColor = activeObject.fill || activeObject.stroke || '#000000';
+    colorEl.value = currentColor;
+  }
 }
-
 
 export function enablePanZoom(canvas, togglePanZoomEl, zoomInEl, zoomOutEl, panZoomMode, toggleDrawModeEl, image) {
   let minZoom = 1; // Initialize minZoom with a default fallback
@@ -152,26 +151,25 @@ export function saveCanvas(canvas) { // save the image
     link.click();
 }
   
-  
-export function updateObjectColor(canvas, drawingColorEl, fillColor) { // this function change the color of the object from color picker after it's created
-    drawingColorEl.onchange = function () {
-      fillColor = this.value; // Update fillColor dynamically
-      if (canvas.isDrawingMode) {
-        canvas.freeDrawingBrush.color = fillColor;
-      } else {
-        const activeObject = canvas.getActiveObject();
-        if (activeObject) {
-          if (activeObject.type === 'polygon' || activeObject.type === 'circle') {
-            activeObject.set({ fill: fillColor, stroke: fillColor }); // Update both polygon and polygon border
-          } else if (activeObject.type === 'path' || activeObject.type === 'line') {
-            activeObject.set({ stroke: fillColor });
-          }
-          canvas.renderAll();
+export function updateObjectColor(canvas, drawingColorEl, fillColor) {
+  // Bu fonksiyon, renk seçici (input) değiştiğinde çağrılacak
+  drawingColorEl.onchange = function () {
+    fillColor = this.value;  // Yeni rengi al
+    if (canvas.isDrawingMode) {
+      canvas.freeDrawingBrush.color = fillColor;  // Çizim fırçasının rengini güncelle
+    } else {
+      const activeObject = canvas.getActiveObject();
+      if (activeObject) {
+        if (activeObject.type === 'polygon' || activeObject.type === 'circle') {
+          activeObject.set({ fill: fillColor, stroke: fillColor });  // Poligon ve dairelerin rengini güncelle
+        } else if (activeObject.type === 'path' || activeObject.type === 'line') {
+          activeObject.set({ stroke: fillColor });  // Çizgilerin rengini güncelle
         }
+        canvas.renderAll();  // Tüm objeleri yeniden render et
       }
-    };
+    }
+  };
 }
-    
 
 export function updateCirclesForSelectedPolygon(canvas) { // show the red circles of the selected polygon only
     // Hide all circles first

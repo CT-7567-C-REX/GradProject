@@ -1,16 +1,11 @@
 import { setCanvasBackground, updateColorPickerFromObject, enablePanZoom, saveCanvas, updateObjectColor, updateCirclesForSelectedPolygon, drawGrid, createPolyControls, createObjectDefaultControls, initializeCenterCanvas } from './canvas_utils.js';
 export function setupCanvas(canvasId) {
-  // Initialize canvas
   const canvas = new fabric.Canvas(canvasId, {
     isDrawingMode: false,
   });
 
-  var grid = 5;
-  //drawGrid(canvas, grid);
-
   setCanvasBackground(canvas, '/static/assets/KHAS.jpg');
 
-  // Variables
   let polygonCount = 1;
   let startDrawingPolygon = false;
   let circleCount = 1;
@@ -19,7 +14,6 @@ export function setupCanvas(canvasId) {
   let panZoomMode = false;
   let editing = false;
 
-  // Element references
   const drawingColorEl = document.getElementById('drawing-color');
   const drawingLineWidthEl = document.getElementById('drawing-line-width');
   const clearEl = document.getElementById('clear-canvas');
@@ -35,13 +29,12 @@ export function setupCanvas(canvasId) {
   canvas.freeDrawingBrush.color = drawingColorEl.value;
   canvas.freeDrawingBrush.width = parseInt(drawingLineWidthEl.value, 10) || 1;
 
-  updateObjectColor(canvas, drawingColorEl, fillColor);
+  updateObjectColor(canvas, drawingColorEl, fillColor);  // Call the update function
 
   drawingLineWidthEl.onchange = function () {
     canvas.freeDrawingBrush.width = parseInt(this.value, 10) || 1;
   };
 
-  // This branch will be related to polygon stuff.
   addPolygonBtn.onclick = function () {
     startDrawingPolygon = true;
     points = [];
@@ -51,7 +44,6 @@ export function setupCanvas(canvasId) {
   createPolygonBtn.onclick = function () {
     if (points.length < 3) return;
 
-    // Create the polygon
     const polygon = new fabric.Polygon(points, {
       fill: fillColor,
       stroke: fillColor,
@@ -60,30 +52,22 @@ export function setupCanvas(canvasId) {
       polygonNo: polygonCount,
     });
 
-    // Add the polygon to the canvas
     canvas.add(polygon);
     canvas.getObjects('circle').forEach(circle => (circle.visible = false));
 
     polygonCount++;
     startDrawingPolygon = false;
 
-    // Reset points array to prevent duplicate polygons
     points = [];
-
-
-  
     
-    // Double-click to toggle edit mode for the polygon
     polygon.on('mousedblclick', () => {
       editing = !editing;
       if (editing) {
-        // Enter edit mode
         polygon.cornerStyle = 'circle';
         polygon.cornerColor = 'rgba(0,0,255,0.5)';
         polygon.hasBorders = false;
         polygon.controls = createPolyControls(polygon);
       } else {
-        // Exit edit mode
         polygon.cornerColor = 'blue';
         polygon.cornerStyle = 'rect';
         polygon.hasBorders = true;
@@ -106,50 +90,34 @@ export function setupCanvas(canvasId) {
         strokeWidth: 1,
         originX: 'center',
         originY: 'center',
-        selectable: true, // Allow selection for circles
-        name: 'draggableCircle', // Identify as draggable circle
-        polygonNo: polygonCount, // Associate with the current polygon
-        circleNo: circleCount,   // Unique identifier for the circle in this polygon
+        selectable: true,
+        name: 'draggableCircle',
+        polygonNo: polygonCount,
+        circleNo: circleCount,
       });
 
-      points.push({ x: pointer.x, y: pointer.y }); // Add the point to the polygon
-      canvas.add(circle); // Add the circle to the canvas
+      points.push({ x: pointer.x, y: pointer.y });
+      canvas.add(circle);
       circleCount++;
     }
   });
 
   initializeCenterCanvas(canvas, centerCanvasBtn);
 
-  // canvas.on('object:moving', function (event) {
-  //   const movedCircle = event.target;
-
-  //   // Only proceed if the moved object is a draggable circle
-  //   if (editing && movedCircle.name === 'draggableCircle') {
-  //     const polygon = canvas.getObjects('polygon').find(p => p.polygonNo === movedCircle.polygonNo);
-  //     if (polygon) {
-  //       // Update the polygon points based on the moved circle
-  //       const updatedPoints = polygon.points.map((point, index) => {
-  //         if (index === movedCircle.circleNo - 1) {
-  //           return { x: movedCircle.left, y: movedCircle.top }; // Update moved point
-  //         }
-  //         return point; // Keep other points unchanged
-  //       });
-  //       polygon.set({ points: updatedPoints });
-  //       canvas.renderAll();
-  //     }
-  //   }
-  // });
-
-  canvas.on('selection:created', () => updateColorPickerFromObject(canvas, drawingColorEl));
-  canvas.on('selection:updated', () => updateColorPickerFromObject(canvas, drawingColorEl));
-
   toggleDrawModeEl.onclick = function () {
     canvas.isDrawingMode = !canvas.isDrawingMode;
     toggleDrawModeEl.textContent = canvas.isDrawingMode ? 'Exit Draw Mode' : 'Enter Draw Mode';
+
     if (canvas.isDrawingMode) {
-      canvas.freeDrawingBrush.color = fillColor;
+      canvas.freeDrawingBrush.color = fillColor;  // Use selected fill color in draw mode
+    } else {
+      canvas.freeDrawingBrush.color = "#000000";  // Set color to black when exiting draw mode
+      document.getElementById('drawing-color').value = "#000000";
     }
   };
+
+  canvas.on('selection:created', () => updateColorPickerFromObject(canvas, drawingColorEl));
+  canvas.on('selection:updated', () => updateColorPickerFromObject(canvas, drawingColorEl));
 
   clearEl.onclick = function () {
     const activeObjects = canvas.getActiveObjects();
@@ -177,7 +145,6 @@ export function setupCanvas(canvasId) {
     saveCanvas(canvas);
   };
 
-  // Enable Pan/Zoom
   enablePanZoom(canvas, togglePanZoomEl, zoomInEl, zoomOutEl, panZoomMode, toggleDrawModeEl);
 
   return canvas;

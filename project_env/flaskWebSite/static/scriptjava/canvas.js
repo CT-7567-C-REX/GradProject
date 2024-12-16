@@ -1,25 +1,34 @@
-import { setCanvasBackground, updateColorPickerFromObject, enablePanZoom, saveCanvas, updateObjectColor, updateCirclesForSelectedPolygon, drawGrid, createPolyControls, createObjectDefaultControls, RectangleTool } from './canvas_utils.js';
+import { 
+  setCanvasBackground, 
+  updateColorPickerFromObject, 
+  enablePanZoom, 
+  saveCanvas, 
+  updateObjectColor, 
+  updateCirclesForSelectedPolygon, 
+  drawGrid, 
+  createPolyControls, 
+  createObjectDefaultControls, 
+  initializeCenterCanvas 
+} from './canvas_utils.js';
+
+// Import the RectangleTool (make sure you've added it to canvas_utils.js as previously discussed)
+import { RectangleTool } from './canvas_utils.js'; 
 
 export function setupCanvas(canvasId) {
   const canvas = new fabric.Canvas(canvasId, {
     isDrawingMode: false,
   });
 
-  var grid = 5;
-  // drawGrid(canvas, grid); // If needed
-
   setCanvasBackground(canvas, '/static/assets/KHAS.jpg');
 
-  // Variables
   let polygonCount = 1;
   let startDrawingPolygon = false;
   let circleCount = 1;
   let points = [];
-  let fillColor = "#000000";
+  let fillColor = "#000000"; // Default color
   let panZoomMode = false;
   let editing = false;
 
-  // Element references
   const drawingColorEl = document.getElementById('drawing-color');
   const drawingLineWidthEl = document.getElementById('drawing-line-width');
   const clearEl = document.getElementById('clear-canvas');
@@ -30,12 +39,13 @@ export function setupCanvas(canvasId) {
   const addPolygonBtn = document.getElementById('add-polygon');
   const createPolygonBtn = document.getElementById('create-polygon');
   const centerCanvasBtn = document.getElementById('center-canvas');
-  const toggleRectangleModeEl = document.getElementById('toggle-rectangle-mode');
+  const toggleRectangleModeEl = document.getElementById('toggle-rectangle-mode'); // Reintroduced for rectangle mode
 
   // Initialize drawing brush
   canvas.freeDrawingBrush.color = drawingColorEl.value;
   canvas.freeDrawingBrush.width = parseInt(drawingLineWidthEl.value, 10) || 1;
-  updateObjectColor(canvas, drawingColorEl, fillColor);
+
+  updateObjectColor(canvas, drawingColorEl, fillColor);  // Call the update function
 
   drawingLineWidthEl.onchange = function () {
     canvas.freeDrawingBrush.width = parseInt(this.value, 10) || 1;
@@ -60,10 +70,11 @@ export function setupCanvas(canvasId) {
 
     canvas.add(polygon);
     canvas.getObjects('circle').forEach(circle => (circle.visible = false));
+
     polygonCount++;
     startDrawingPolygon = false;
     points = [];
-
+    
     polygon.on('mousedblclick', () => {
       editing = !editing;
       if (editing) {
@@ -89,8 +100,8 @@ export function setupCanvas(canvasId) {
         left: pointer.x,
         top: pointer.y,
         radius: 5,
-        fill: 'black',
-        stroke: 'black',
+        fill: 'red',
+        stroke: 'red',
         strokeWidth: 1,
         originX: 'center',
         originY: 'center',
@@ -106,16 +117,22 @@ export function setupCanvas(canvasId) {
     }
   });
 
-  canvas.on('selection:created', () => updateColorPickerFromObject(canvas, drawingColorEl));
-  canvas.on('selection:updated', () => updateColorPickerFromObject(canvas, drawingColorEl));
+  initializeCenterCanvas(canvas, centerCanvasBtn);
 
   toggleDrawModeEl.onclick = function () {
     canvas.isDrawingMode = !canvas.isDrawingMode;
     toggleDrawModeEl.textContent = canvas.isDrawingMode ? 'Exit Draw Mode' : 'Enter Draw Mode';
+
     if (canvas.isDrawingMode) {
-      canvas.freeDrawingBrush.color = fillColor;
+      canvas.freeDrawingBrush.color = fillColor;  // Use selected fill color in draw mode
+    } else {
+      canvas.freeDrawingBrush.color = "#000000";  // Set color to black when exiting draw mode
+      document.getElementById('drawing-color').value = "#000000";
     }
   };
+
+  canvas.on('selection:created', () => updateColorPickerFromObject(canvas, drawingColorEl));
+  canvas.on('selection:updated', () => updateColorPickerFromObject(canvas, drawingColorEl));
 
   clearEl.onclick = function () {
     const activeObjects = canvas.getActiveObjects();
@@ -143,7 +160,6 @@ export function setupCanvas(canvasId) {
     saveCanvas(canvas);
   };
 
-  // Enable Pan/Zoom
   enablePanZoom(canvas, togglePanZoomEl, zoomInEl, zoomOutEl, panZoomMode, toggleDrawModeEl);
 
   // Initialize the rectangle tool
@@ -152,10 +168,11 @@ export function setupCanvas(canvasId) {
   if (toggleRectangleModeEl) {
     toggleRectangleModeEl.onclick = function() {
       if (rectangleTool.isEnable()) {
+        // If rectangle mode is currently enabled, disable it
         rectangleTool.disable();
         toggleRectangleModeEl.textContent = 'Enter Rectangle Mode';
       } else {
-        // Disable other modes
+        // Before enabling rectangle mode, ensure other modes are disabled
         canvas.isDrawingMode = false;
         panZoomMode = false;
         startDrawingPolygon = false;

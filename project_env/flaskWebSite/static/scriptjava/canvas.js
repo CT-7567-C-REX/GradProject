@@ -1,4 +1,19 @@
-import { setCanvasBackground, updateColorPickerFromObject, enablePanZoom, saveCanvas, updateObjectColor, updateCirclesForSelectedPolygon, drawGrid, createPolyControls, createObjectDefaultControls, initializeCenterCanvas } from './canvas_utils.js';
+import { 
+  setCanvasBackground, 
+  updateColorPickerFromObject, 
+  enablePanZoom, 
+  saveCanvas, 
+  updateObjectColor, 
+  updateCirclesForSelectedPolygon, 
+  drawGrid, 
+  createPolyControls, 
+  createObjectDefaultControls, 
+  initializeCenterCanvas 
+} from './canvas_utils.js';
+
+// Import the RectangleTool (make sure you've added it to canvas_utils.js as previously discussed)
+import { RectangleTool } from './canvas_utils.js'; 
+
 export function setupCanvas(canvasId) {
   const canvas = new fabric.Canvas(canvasId, {
     isDrawingMode: false,
@@ -24,6 +39,7 @@ export function setupCanvas(canvasId) {
   const addPolygonBtn = document.getElementById('add-polygon');
   const createPolygonBtn = document.getElementById('create-polygon');
   const centerCanvasBtn = document.getElementById('center-canvas');
+  const toggleRectangleModeEl = document.getElementById('toggle-rectangle-mode'); // Reintroduced for rectangle mode
 
   // Initialize drawing brush
   canvas.freeDrawingBrush.color = drawingColorEl.value;
@@ -57,7 +73,6 @@ export function setupCanvas(canvasId) {
 
     polygonCount++;
     startDrawingPolygon = false;
-
     points = [];
     
     polygon.on('mousedblclick', () => {
@@ -146,6 +161,27 @@ export function setupCanvas(canvasId) {
   };
 
   enablePanZoom(canvas, togglePanZoomEl, zoomInEl, zoomOutEl, panZoomMode, toggleDrawModeEl);
+
+  // Initialize the rectangle tool
+  const rectangleTool = new RectangleTool(canvas);
+
+  if (toggleRectangleModeEl) {
+    toggleRectangleModeEl.onclick = function() {
+      if (rectangleTool.isEnable()) {
+        // If rectangle mode is currently enabled, disable it
+        rectangleTool.disable();
+        toggleRectangleModeEl.textContent = 'Enter Rectangle Mode';
+      } else {
+        // Before enabling rectangle mode, ensure other modes are disabled
+        canvas.isDrawingMode = false;
+        panZoomMode = false;
+        startDrawingPolygon = false;
+
+        rectangleTool.enable();
+        toggleRectangleModeEl.textContent = 'Exit Rectangle Mode';
+      }
+    };
+  }
 
   return canvas;
 }

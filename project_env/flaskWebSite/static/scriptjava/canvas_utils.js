@@ -318,3 +318,92 @@ export function createObjectDefaultControls() {
     }),
   };
 }
+export class RectangleTool {
+  constructor(canvas) {
+      this.canvas = canvas;
+      this.isDrawing = false;
+      this.origX = 0;
+      this.origY = 0;
+      this.bindEvents();
+  }
+
+  bindEvents() {
+      this.canvas.on('mouse:down', (o) => this.onMouseDown(o));
+      this.canvas.on('mouse:move', (o) => this.onMouseMove(o));
+      this.canvas.on('mouse:up', (o) => this.onMouseUp(o));
+      this.canvas.on('object:moving', () => this.disable()); 
+      // You may remove the above line if you don't want the tool to disable when moving objects.
+  }
+
+  onMouseDown(o) {
+      if (!this.isDrawing) return;
+      const pointer = this.canvas.getPointer(o.e);
+      this.origX = pointer.x;
+      this.origY = pointer.y;
+
+      const rect = new fabric.Rect({
+          left: this.origX,
+          top: this.origY,
+          originX: 'left',
+          originY: 'top',
+          width: 0,
+          height: 0,
+          angle: 0,
+          transparentCorners: false,
+          hasBorders: false,
+          hasControls: false,
+          stroke: 'red',
+          strokeWidth: 5,
+          fill: 'transparent'
+      });
+
+      this.canvas.add(rect).setActiveObject(rect);
+  }
+
+  onMouseMove(o) {
+      if (!this.isDrawing) return;
+      const activeObj = this.canvas.getActiveObject();
+      if (!activeObj) return;
+
+      const pointer = this.canvas.getPointer(o.e);
+
+      if (this.origX > pointer.x) {
+          activeObj.set({ left: Math.abs(pointer.x) });
+      }
+      if (this.origY > pointer.y) {
+          activeObj.set({ top: Math.abs(pointer.y) });
+      }
+
+      activeObj.set({
+          width: Math.abs(this.origX - pointer.x),
+          height: Math.abs(this.origY - pointer.y)
+      });
+
+      activeObj.setCoords();
+      this.canvas.renderAll();
+  }
+
+  onMouseUp(o) {
+      if (!this.isDrawing) return;
+      
+      // After finishing the rectangle, deselect it so it won't stick to the cursor.
+      this.canvas.discardActiveObject();
+      this.canvas.renderAll();
+      
+      // IMPORTANT: Do NOT disable here, let the user keep drawing rectangles until they exit the mode.
+      // If you prefer to only allow one rectangle per mode activation, you could call this.disable() here.
+      // But then you must also update the button text in the main code.
+  }
+
+  isEnable() {
+      return this.isDrawing;
+  }
+
+  enable() {
+      this.isDrawing = true;
+  }
+
+  disable() {
+      this.isDrawing = false;
+  }
+}

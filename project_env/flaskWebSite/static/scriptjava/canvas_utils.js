@@ -324,6 +324,11 @@ export class RectangleTool {
       this.isDrawing = false;
       this.origX = 0;
       this.origY = 0;
+      
+      // We'll store drawn rectangles data here
+      // In a production scenario, you might store this elsewhere or pass it to backend.
+      this.drawnRectangles = [];
+
       this.bindEvents();
   }
 
@@ -331,8 +336,6 @@ export class RectangleTool {
       this.canvas.on('mouse:down', (o) => this.onMouseDown(o));
       this.canvas.on('mouse:move', (o) => this.onMouseMove(o));
       this.canvas.on('mouse:up', (o) => this.onMouseUp(o));
-      this.canvas.on('object:moving', () => this.disable()); 
-      // You may remove the above line if you don't want the tool to disable when moving objects.
   }
 
   onMouseDown(o) {
@@ -386,13 +389,54 @@ export class RectangleTool {
   onMouseUp(o) {
       if (!this.isDrawing) return;
       
-      // After finishing the rectangle, deselect it so it won't stick to the cursor.
+      const activeObj = this.canvas.getActiveObject();
+      if (!activeObj) return;
+
+      // Compute the coordinates of the corners of the rectangle
+      const left = activeObj.left;
+      const top = activeObj.top;
+      const width = activeObj.width * activeObj.scaleX;   // In Fabric.js, width/height might be scaled
+      const height = activeObj.height * activeObj.scaleY; // so we multiply by scaleX/scaleY to get actual size
+
+      const topLeft = { x: left, y: top };
+      const topRight = { x: left + width, y: top };
+      const bottomLeft = { x: left, y: top + height };
+      const bottomRight = { x: left + width, y: top + height };
+
+      // Prompt the user for a label or confirmation
+      const userLabel = prompt(
+        `Coordinates of the drawn rectangle:
+        Top Left: (${topLeft.x.toFixed(2)}, ${topLeft.y.toFixed(2)})
+        Top Right: (${topRight.x.toFixed(2)}, ${topRight.y.toFixed(2)})
+        Bottom Left: (${bottomLeft.x.toFixed(2)}, ${bottomLeft.y.toFixed(2)})
+        Bottom Right: (${bottomRight.x.toFixed(2)}, ${bottomRight.y.toFixed(2)})
+
+Please enter a label or description for this rectangle:`
+      );
+
+      // Store the data
+      const rectData = {
+          label: userLabel || 'No label provided',
+          coordinates: {
+              topLeft,
+              topRight,
+              bottomLeft,
+              bottomRight
+          }
+      };
+
+      this.drawnRectangles.push(rectData);
+
+      // At this point, you could send rectData to your backend via fetch() or AJAX if you wish.
+      // For now, we just log it:
+      console.log('Stored rectangle data:', rectData);
+
+      // Discard the active selection so it doesn't move around with the cursor
       this.canvas.discardActiveObject();
       this.canvas.renderAll();
-      
-      // IMPORTANT: Do NOT disable here, let the user keep drawing rectangles until they exit the mode.
-      // If you prefer to only allow one rectangle per mode activation, you could call this.disable() here.
-      // But then you must also update the button text in the main code.
+
+      // Do NOT disable the tool here. The user can continue drawing rectangles
+      // until they click the "Exit Rectangle Mode" button.
   }
 
   isEnable() {

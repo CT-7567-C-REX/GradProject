@@ -7,7 +7,7 @@ export function setupCanvas(canvasId) {
 
   setCanvasBackground(canvas, '/static/assets/KHAS.jpg');
 
-  let startDrawingPolygon = false;
+
 
   let fillColor = "#000000"; // Default color
   let panZoomMode = false;
@@ -92,7 +92,7 @@ export function setupCanvas(canvasId) {
         // Before enabling rectangle mode, ensure other modes are disabled
         canvas.isDrawingMode = false;
         panZoomMode = false;
-        startDrawingPolygon = false;
+
 
         rectangleTool.enable();
         toggleRectangleModeEl.textContent = 'Exit Rectangle Mode';

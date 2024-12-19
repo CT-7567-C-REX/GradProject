@@ -1,16 +1,4 @@
-import { 
-  setCanvasBackground, 
-  updateColorPickerFromObject, 
-  enablePanZoom, 
-  saveCanvas, 
-  updateObjectColor, 
-  createPolyControls, 
-  createObjectDefaultControls, 
-  initializeCenterCanvas 
-} from './canvas_utils.js';
-
-// Import the RectangleTool (make sure you've added it to canvas_utils.js as previously discussed)
-import { RectangleTool } from './canvas_utils.js'; 
+import { setCanvasBackground, updateColorPickerFromObject, enablePanZoom, saveCanvas, updateObjectColor, initializeCenterCanvas, RectangleTool } from './canvas_utils.js';
 
 export function setupCanvas(canvasId) {
   const canvas = new fabric.Canvas(canvasId, {
@@ -19,13 +7,11 @@ export function setupCanvas(canvasId) {
 
   setCanvasBackground(canvas, '/static/assets/KHAS.jpg');
 
-  let polygonCount = 1;
   let startDrawingPolygon = false;
-  let circleCount = 1;
-  let points = [];
+
   let fillColor = "#000000"; // Default color
   let panZoomMode = false;
-  let editing = false;
+
 
   const drawingColorEl = document.getElementById('drawing-color');
   const drawingLineWidthEl = document.getElementById('drawing-line-width');
@@ -34,8 +20,7 @@ export function setupCanvas(canvasId) {
   const togglePanZoomEl = document.getElementById('toggle-pan-zoom');
   const zoomInEl = document.getElementById('zoom-in');
   const zoomOutEl = document.getElementById('zoom-out');
-  const addPolygonBtn = document.getElementById('add-polygon');
-  const createPolygonBtn = document.getElementById('create-polygon');
+  
   const centerCanvasBtn = document.getElementById('center-canvas');
   const toggleRectangleModeEl = document.getElementById('toggle-rectangle-mode'); // Reintroduced for rectangle mode
 

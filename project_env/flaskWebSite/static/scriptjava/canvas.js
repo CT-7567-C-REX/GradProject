@@ -4,8 +4,6 @@ import {
   enablePanZoom, 
   saveCanvas, 
   updateObjectColor, 
-  updateCirclesForSelectedPolygon, 
-  drawGrid, 
   createPolyControls, 
   createObjectDefaultControls, 
   initializeCenterCanvas 

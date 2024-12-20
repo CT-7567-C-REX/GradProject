@@ -7,11 +7,8 @@ export function setupCanvas(canvasId) {
 
   setCanvasBackground(canvas, '/static/assets/KHAS.jpg');
 
-
-
-  let fillColor = "#000000"; // Default color
+  let fillColor = "#000000"; 
   let panZoomMode = false;
-
 
   const drawingColorEl = document.getElementById('drawing-color');
   const drawingLineWidthEl = document.getElementById('drawing-line-width');
@@ -20,15 +17,13 @@ export function setupCanvas(canvasId) {
   const togglePanZoomEl = document.getElementById('toggle-pan-zoom');
   const zoomInEl = document.getElementById('zoom-in');
   const zoomOutEl = document.getElementById('zoom-out');
-  
   const centerCanvasBtn = document.getElementById('center-canvas');
-  const toggleRectangleModeEl = document.getElementById('toggle-rectangle-mode'); // Reintroduced for rectangle mode
+  const toggleRectangleModeEl = document.getElementById('toggle-rectangle-mode');
 
-  // Initialize drawing brush
   canvas.freeDrawingBrush.color = drawingColorEl.value;
   canvas.freeDrawingBrush.width = parseInt(drawingLineWidthEl.value, 10) || 1;
 
-  updateObjectColor(canvas, drawingColorEl, fillColor);  // Call the update function
+  updateObjectColor(canvas, drawingColorEl, fillColor);
 
   drawingLineWidthEl.onchange = function () {
     canvas.freeDrawingBrush.width = parseInt(this.value, 10) || 1;
@@ -41,9 +36,9 @@ export function setupCanvas(canvasId) {
     toggleDrawModeEl.textContent = canvas.isDrawingMode ? 'Exit Draw Mode' : 'Enter Draw Mode';
 
     if (canvas.isDrawingMode) {
-      canvas.freeDrawingBrush.color = fillColor;  // Use selected fill color in draw mode
+      canvas.freeDrawingBrush.color = fillColor;
     } else {
-      canvas.freeDrawingBrush.color = "#000000";  // Set color to black when exiting draw mode
+      canvas.freeDrawingBrush.color = "#000000";
       document.getElementById('drawing-color').value = "#000000";
     }
   };
@@ -85,14 +80,11 @@ export function setupCanvas(canvasId) {
   if (toggleRectangleModeEl) {
     toggleRectangleModeEl.onclick = function() {
       if (rectangleTool.isEnable()) {
-        // If rectangle mode is currently enabled, disable it
         rectangleTool.disable();
         toggleRectangleModeEl.textContent = 'Enter Rectangle Mode';
       } else {
-        // Before enabling rectangle mode, ensure other modes are disabled
         canvas.isDrawingMode = false;
         panZoomMode = false;
-
 
         rectangleTool.enable();
         toggleRectangleModeEl.textContent = 'Exit Rectangle Mode';

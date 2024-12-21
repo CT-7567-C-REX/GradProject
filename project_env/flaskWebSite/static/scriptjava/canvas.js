@@ -5,7 +5,7 @@ import {
   saveCanvas,
   updateObjectColor,
   initializeCenterCanvas,
-  RectangleTool
+  RectangleTool,
 } from "./canvas_utils.js";
 
 export function setupCanvas(canvasId) {
@@ -13,7 +13,7 @@ export function setupCanvas(canvasId) {
     isDrawingMode: false,
   });
 
-  setCanvasBackground(canvas, "/static/assets/KHAS.jpg");
+  setCanvasBackground(canvas, "/static/assets/logo.svg");
 
   let fillColor = "#000000";
   let panZoomMode = false;
@@ -21,7 +21,7 @@ export function setupCanvas(canvasId) {
   // DOM references
   const drawingColorEl = document.getElementById("drawing-color");
   const drawingLineWidthEl = document.getElementById("drawing-line-width");
-  const clearEl = document.getElementById("clear-canvas");
+  
   const toggleDrawModeEl = document.getElementById("toggle-draw-mode");
   const togglePanZoomEl = document.getElementById("toggle-pan-zoom");
   const zoomInEl = document.getElementById("zoom-in");
@@ -65,26 +65,6 @@ export function setupCanvas(canvasId) {
     updateColorPickerFromObject(canvas, drawingColorEl)
   );
 
-  // Clear or delete
-  clearEl.onclick = function () {
-    const activeObjects = canvas.getActiveObjects();
-    if (activeObjects.length > 0) {
-      activeObjects.forEach((obj) => canvas.remove(obj));
-    } else {
-      canvas.clear();
-      setCanvasBackground(canvas, "/static/assets/KHAS.jpg");
-    }
-  };
-
-  canvas.on("selection:created", function () {
-    clearEl.textContent = "Delete Selection";
-  });
-  canvas.on("selection:updated", function () {
-    clearEl.textContent = "Delete Selection";
-  });
-  canvas.on("selection:cleared", function () {
-    clearEl.textContent = "Clear Canvas";
-  });
 
   // Save canvas
   document.getElementById("save-canvas").onclick = function () {

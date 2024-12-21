@@ -1,15 +1,14 @@
 import { formDataToJson, sendToEndpoint, handleFilePreview } from './utils.js';
 import { setupCanvas } from './canvas.js';
+import { setCanvasBackground, clearCanvas} from "./canvas_utils.js";
 
-// File Preview
+
 handleFilePreview("input[type=file]", "#file-preview"); // file preview
 
 // Canvas Setup
-const canvasElement = document.getElementById('canvas');
-let canvas;
-if (canvasElement) {
-    canvas = setupCanvas('canvas');
-}
+let predimage;
+let canvas = setupCanvas('canvas');
+
 
 // Upload Form for Prediction
 function initializeUploadForm() {
@@ -34,24 +33,17 @@ function initializeUploadForm() {
             const payload = await formDataToJson(fileInput); // Convert form data to JSON
             const data = await sendToEndpoint('/prediction', payload); // Send data to server
             const predictedImageBase64 = data.image; // Server results
-
+            predimage = 'data:image/png;base64,' + predictedImageBase64,
             statusElement.textContent = 'Upload successful!';
 
             // Set the predicted image as the background of the canvas
-            fabric.Image.fromURL(
-                'data:image/png;base64,' + predictedImageBase64,
-                function (img) {
-                    canvas.setBackgroundImage(img, canvas.renderAll.bind(canvas), {
-                        scaleX: canvas.width / img.width,
-                        scaleY: canvas.height / img.height,
-                    });
-                }
-            );
+            setCanvasBackground(canvas, predimage);
         } catch (error) {
             statusElement.textContent = 'Error: ' + error.message;
         }
     });
 }
+const clearEl = document.getElementById("clear-canvas");
+clearEl.onclick = () => { clearCanvas(canvas, predimage)}; // keep the canvas while clearing the objects
 
-// Initialize Forms
 initializeUploadForm();

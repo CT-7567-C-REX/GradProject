@@ -18,6 +18,18 @@ export function setCanvasBackground(canvas, imageUrl) {
   });
 }
 
+export function clearCanvas(canvas, img) {
+  
+  canvas.clear(); // Clear everything on the canvas
+  if (img) {
+      setCanvasBackground(canvas, img); // Reset the background with the provided image
+  } else {
+      setCanvasBackground(canvas, "/static/assets/logo.svg"); // Default background
+      console.log("Default background applied.");
+  }
+}
+
+
 export function updateColorPickerFromObject(canvas, colorEl) {
   const activeObject = canvas.getActiveObject();
   if (activeObject) {

@@ -43,3 +43,16 @@ def prediction():
 
     return jsonify({"image": output_base64})
 
+@pep.route('/RLHFprocess', methods=['POST'])
+def RLHFprocess():
+    try:
+        data = request.get_json()
+
+        image = convert_json_to_pil(data.get('canvasImage'))
+        
+        image.save('c:\\Users\\90555\\Desktop\\klasor\\enes.jpg', 'JPEG')
+
+        return jsonify({"status": "success", "message": "Endpoint is working"}), 200
+    
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500

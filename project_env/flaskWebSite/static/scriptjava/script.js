@@ -1,5 +1,5 @@
 import { formDataToJson, sendToEndpoint, handleFilePreview } from './utils.js';
-import { setupCanvas } from './canvas.js';
+import { setupCanvas, } from './canvas.js';
 
 // File Preview
 handleFilePreview("input[type=file]", "#file-preview"); // file preview
@@ -9,6 +9,23 @@ const canvasElement = document.getElementById('canvas');
 let canvas;
 if (canvasElement) {
     canvas = setupCanvas('canvas');
+}
+// Get image from upload input as Base64
+export async function getImageFromUploadAsBase64()
+{
+  const imgEl = document.querySelector('#file-preview');
+  const fileInput = document.getElementById('img');
+  return await formDataToJson(fileInput);
+}
+
+export function getImageFromCanvasAsBase64()
+{
+    const canvas = document.querySelector('#canvas');
+    const dataURL = canvas.toDataURL({
+        format: 'png', 
+        quality: 1.0,  // Adjust this for compression
+      });
+    return dataURL.split(',')[1];
 }
 
 // Upload Form for Prediction
@@ -47,11 +64,13 @@ function initializeUploadForm() {
                     });
                 }
             );
+            getImageFromCanvasAsBase64();
         } catch (error) {
             statusElement.textContent = 'Error: ' + error.message;
         }
     });
 }
+
 
 // Upload Form for Classification
 function initializeClassificationForm() {

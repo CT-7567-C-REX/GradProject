@@ -1,4 +1,6 @@
 import { setCanvasBackground, updateColorPickerFromObject, enablePanZoom, saveCanvas, updateObjectColor, updateCirclesForSelectedPolygon, drawGrid, createPolyControls, createObjectDefaultControls, initializeCenterCanvas } from './canvas_utils.js';
+import { getImageFromCanvasAsBase64, getImageFromUploadAsBase64 } from './script.js';
+import { sendToEndpoint } from './utils.js';
 export function setupCanvas(canvasId) {
   const canvas = new fabric.Canvas(canvasId, {
     isDrawingMode: false,
@@ -143,7 +145,15 @@ export function setupCanvas(canvasId) {
 
   document.getElementById('save-canvas').onclick = function () {
     saveCanvas(canvas);
-  };
+    
+    const canvasImageInBase64 = getImageFromCanvasAsBase64();
+    const uploadedImageInBase64 = getImageFromUploadAsBase64().then(uploadedImageInBase64 =>{ 
+      const requestBody = {canvasImage: canvasImageInBase64, ...uploadedImageInBase64 }
+      sendToEndpoint("/RLHFprocess",requestBody).then(resp => {
+        console.log(resp)
+      })
+    });
+  }
 
   enablePanZoom(canvas, togglePanZoomEl, zoomInEl, zoomOutEl, panZoomMode, toggleDrawModeEl);
 

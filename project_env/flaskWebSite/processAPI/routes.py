@@ -2,6 +2,9 @@ from flask import Blueprint, request, jsonify
 from flaskWebSite.processAPI.utils import convert_json_to_pil, save_picture, model_loader, generate, convert_pil_to_base64, predict_single_image
 from pathlib import Path
 import torch
+import os
+import io 
+from io import BytesIO
 
 
 # Create Blueprint
@@ -43,3 +46,32 @@ def prediction():
 
     return jsonify({"image": output_base64})
 
+#new endpoint but just dummy
+@pep.route('/RLHFprocess', methods=['POST'])
+def RLHFprocess():
+    try:
+        # Gelen veriyi al
+        data = request.get_json()
+        print("Gelen veri:", data)  # Loglama için
+        if not data or 'canvasImage' not in data:
+            return jsonify({"status": "error", "message": "Eksik veri: canvasImage alanı gerekli"}), 400
+
+        # Görseli dönüştür
+        canvas_image_base64 = data.get('canvasImage')
+        image = convert_json_to_pil(canvas_image_base64)
+
+        # Görseli kaydet
+        save_path = os.path.join(os.path.expanduser("~"), "Desktop", "klasor", "enes.jpg")
+        image.save(save_path, 'JPEG')
+
+        # Başarılı yanıt
+        return jsonify({
+            "status": "success",
+            "message": "Endpoint çalışıyor",
+            "file_path": save_path
+        }), 200
+
+    except ValueError as ve:
+        return jsonify({"status": "error", "message": str(ve)}), 400
+    except Exception as e:
+        return jsonify({"status": "error", "message": f"Beklenmeyen bir hata oluştu: {e}"}), 500

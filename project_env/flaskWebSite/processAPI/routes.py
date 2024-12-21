@@ -34,7 +34,7 @@ def prediction():
 
     model = VGGUNET19()
 
-    model_path = base_dir / "modelsTrained" / "VGGUnet19_Segmentation_best.pth.tar"
+    model_path = base_dir / "modelsTrained" / "newModel.pth.tar"
     model = model_loader(model, model_path)
 
     output_image = generate(image, model)

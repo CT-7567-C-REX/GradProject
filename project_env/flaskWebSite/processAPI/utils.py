@@ -66,7 +66,8 @@ def visualize_output(predictions, from_tensor=True):
         0: (0, 0, 0),
         1: (255, 80, 80),
         2: (80, 80, 255),
-        3: (255, 255, 255),
+        3: (255, 255, 0),
+        4: (255, 255, 255),  
     }
     
     if from_tensor:

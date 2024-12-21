@@ -98,7 +98,7 @@ export function setupCanvas(canvasId) {
         if (!togglePanZoomEl.disabled) {
           // but we must also sync the button text & disable zoom
           panZoomMode = false;
-          togglePanZoomEl.textContent = "Enter Pan/Zoom Mode";
+          togglePanZoomEl.textContent = "Switch to Pan/Zoom Mode";
           zoomInEl.disabled = true;
           zoomOutEl.disabled = true;
         }

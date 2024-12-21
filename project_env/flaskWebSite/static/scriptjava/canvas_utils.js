@@ -106,7 +106,7 @@ export function enablePanZoom(
     // Update button text
     togglePanZoomEl.textContent = panZoomMode
       ? "Exit Pan/Zoom Mode"
-      : "Enter Pan/Zoom Mode";
+      : "Switch to Pan/Zoom Mode";
 
     // Enable or disable the zoom in/out buttons
     zoomInEl.disabled = !panZoomMode;

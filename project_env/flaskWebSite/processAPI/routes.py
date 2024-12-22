@@ -56,7 +56,7 @@ def rlhf_process():
         # Extract fields from the JSON
         base64_original_image = data.get('image')  
         base64_pred_image = data.get('predImage')  
-        rectangle = data.get('rectangle')  # Rectangle data
+        rectangles = data.get('rectangles', [])
 
         # Convert Base64 to PIL
         if base64_original_image:
@@ -68,9 +68,13 @@ def rlhf_process():
             pred_image = Image.open(io.BytesIO(base64.b64decode(base64_pred_image)))
             pred_image.show()
 
-        # Print rectangle
-        if rectangle:
-            print(rectangle)
+        print(f"Number of rectangles: {len(rectangles)}", flush=True)
+        for idx, rect_data in enumerate(rectangles, start=1):
+            print(f"Rectangle #{idx}:", flush=True)
+            print("  Label:", rect_data.get('label'), flush=True)
+            print("  Bounding Box:", rect_data.get('boundingBox'), flush=True)
+            print("  Corners:", rect_data.get('corners'), flush=True)
+            print("-----", flush=True)
 
        
         return jsonify({"success": True, "message": "Images displayed and rectangle details logged."})
@@ -78,3 +82,4 @@ def rlhf_process():
     except Exception as e:
         print(f"Error processing data: {e}")
         return jsonify({"success": False, "message": f"Error: {str(e)}"}), 500
+

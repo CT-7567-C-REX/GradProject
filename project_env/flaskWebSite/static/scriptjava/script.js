@@ -1,4 +1,4 @@
-import { formDataToJson, sendToEndpoint, handleFilePreview } from './utils.js';
+import { formDataToJson, sendToEndpoint, handleFilePreview, createPayloadForBackEnd } from './utils.js';
 import { setupCanvas } from './canvas.js';
 import { setCanvasBackground, clearCanvas } from "./canvas_utils.js";
 
@@ -8,11 +8,6 @@ handleFilePreview("input[type=file]", "#file-preview"); // file preview
 // Canvas Setup
 let predimage;
 let { canvas, rectangleTool } = setupCanvas("canvas");
-
-// Function to log rectangle data
-function logRectangleData() {
-  console.log(rectangleTool.drawnRectangles);
-}
 
 // Upload Form for Prediction
 function initializeUploadForm() {
@@ -47,8 +42,44 @@ function initializeUploadForm() {
         }
     });
 }
+
+// Add event listener for the "Done" button
+document.addEventListener("DOMContentLoaded", () => {
+    const saveCanvasButton = document.getElementById("save-canvas");
+
+    if (saveCanvasButton) { // Check if the button exists
+        saveCanvasButton.onclick = async function () {
+
+            const fileInput = document.getElementById('img'); // Form image data
+            const statusElement = document.getElementById('status'); // Status feedback
+
+            try {
+                statusElement.textContent = 'Processing...';
+
+                // Create payload for backend
+                const payload = await createPayloadForBackEnd(fileInput, predimage, rectangleTool);
+
+                // Send payload to backend endpoint
+                const response = await sendToEndpoint('/rlhfprocess', payload);
+
+                if (response.success) {
+                    statusElement.textContent = 'Process completed successfully!';
+                } else {
+                    statusElement.textContent = 'Processing failed. Please try again.';
+                }
+            } catch (error) {
+                if (statusElement) {
+                    statusElement.textContent = 'Error: ' + error.message;
+                }
+            }
+        };
+    } else {
+        console.warn('Save canvas button not found. Ensure the button is defined in your HTML.');
+    }
+});
+
+
 const clearEl = document.getElementById("clear-canvas");
 clearEl.onclick = () => { clearCanvas(canvas, predimage)}; // keep the canvas while clearing the objects
 
 initializeUploadForm();
-logRectangleData(); // just for log

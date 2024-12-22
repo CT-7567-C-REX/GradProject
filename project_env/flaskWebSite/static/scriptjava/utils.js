@@ -58,3 +58,32 @@ export function handleFilePreview(fileInputSelector, previewElementSelector) {
         });
     }
 }
+
+export async function createPayloadForBackEnd(fileInput, predimg, rect) {
+    return new Promise((resolve, reject) => {
+        const file = fileInput.files[0];
+        const reader = new FileReader();
+
+        reader.onload = () => {
+            const base64Image = reader.result.split(',')[1]; // Extract the Base64 data
+
+            // Prepare the payload
+            const payload = {
+                image: base64Image, // Original uploaded image
+                predImage: predimg ? predimg.split(',')[1] : null, // Predicted image (if exists, extract Base64 part)
+                rectangle: rect ? {
+                    x: rect.x,
+                    y: rect.y,
+                    width: rect.width,
+                    height: rect.height
+                } : null // Rectangle coordinates (if available)
+            };
+
+            resolve(payload);
+        };
+
+        reader.onerror = (error) => reject(error);
+
+        reader.readAsDataURL(file); // Start reading the file
+    });
+}

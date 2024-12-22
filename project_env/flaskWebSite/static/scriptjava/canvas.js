@@ -66,10 +66,10 @@ export function setupCanvas(canvasId) {
   );
 
 
-  // Save canvas
-  document.getElementById("save-canvas").onclick = function () {
-    saveCanvas(canvas);
-  };
+  // // Save canvas
+  // document.getElementById("save-canvas").onclick = function () {
+  //   saveCanvas(canvas);
+  // };
 
   // Initialize the rectangle tool
   const rectangleTool = new RectangleTool(canvas);

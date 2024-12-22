@@ -2,6 +2,10 @@ from flask import Blueprint, request, jsonify
 from flaskWebSite.processAPI.utils import convert_json_to_pil, save_picture, model_loader, generate, convert_pil_to_base64, predict_single_image
 from pathlib import Path
 import torch
+from PIL import Image
+import io
+import base64
+from pathlib import Path
 
 
 # Create Blueprint
@@ -43,16 +47,34 @@ def prediction():
 
     return jsonify({"image": output_base64})
 
-@pep.route('/RLHFprocess', methods=['POST'])
-def RLHFprocess():
+@pep.route('/rlhfprocess', methods=['POST'])
+def rlhf_process():
     try:
+        # Parse JSON data from the request
         data = request.get_json()
 
-        image = convert_json_to_pil(data.get('canvasImage'))
-        
-        image.save('c:\\Users\\90555\\Desktop\\klasor\\enes.jpg', 'JPEG')
+        # Extract fields from the JSON
+        base64_original_image = data.get('image')  
+        base64_pred_image = data.get('predImage')  
+        rectangle = data.get('rectangle')  # Rectangle data
 
-        return jsonify({"status": "success", "message": "Endpoint is working"}), 200
-    
+        # Convert Base64 to PIL
+        if base64_original_image:
+            original_image = Image.open(io.BytesIO(base64.b64decode(base64_original_image)))
+            original_image.show()
+
+        
+        if base64_pred_image:
+            pred_image = Image.open(io.BytesIO(base64.b64decode(base64_pred_image)))
+            pred_image.show()
+
+        # Print rectangle
+        if rectangle:
+            print(rectangle)
+
+       
+        return jsonify({"success": True, "message": "Images displayed and rectangle details logged."})
+
     except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
+        print(f"Error processing data: {e}")
+        return jsonify({"success": False, "message": f"Error: {str(e)}"}), 500

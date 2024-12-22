@@ -19,16 +19,14 @@ export function setCanvasBackground(canvas, imageUrl) {
 }
 
 export function clearCanvas(canvas, img) {
-  
   canvas.clear(); // Clear everything on the canvas
   if (img) {
-      setCanvasBackground(canvas, img); // Reset the background with the provided image
+    setCanvasBackground(canvas, img); // Reset the background with the provided image
   } else {
-      setCanvasBackground(canvas, "/static/assets/logo.svg"); // Default background
-      console.log("Default background applied.");
+    setCanvasBackground(canvas, "/static/assets/logo.svg"); // Default background
+    console.log("Default background applied.");
   }
 }
-
 
 export function updateColorPickerFromObject(canvas, colorEl) {
   const activeObject = canvas.getActiveObject();
@@ -114,7 +112,7 @@ export function enablePanZoom(
 
     // Also enable or disable the rectangle button, so user can't enter rectangle if panZoom is active
     if (toggleRectangleModeEl) {
-      toggleRectangleModeEl.disabled = panZoomMode; // <--- Key line
+      toggleRectangleModeEl.disabled = panZoomMode;
     }
 
     if (panZoomMode) {
@@ -240,6 +238,7 @@ export class RectangleTool {
     this.isDrawing = false;
     this.origX = 0;
     this.origY = 0;
+    // All rectangle data is stored here
     this.drawnRectangles = [];
 
     this.bindEvents();
@@ -344,7 +343,6 @@ Please enter a label or description for this rectangle:`
     };
 
     this.drawnRectangles.push(rectData);
-    //console.log("Stored rectangle data:", rectData);
 
     // Remove the original red rectangle
     this.canvas.remove(activeObj);

@@ -2,7 +2,6 @@ import {
   setCanvasBackground,
   updateColorPickerFromObject,
   enablePanZoom,
-  saveCanvas,
   updateObjectColor,
   initializeCenterCanvas,
   RectangleTool,
@@ -13,6 +12,7 @@ export function setupCanvas(canvasId) {
     isDrawingMode: false,
   });
 
+  // Set a default background on load
   setCanvasBackground(canvas, "/static/assets/logo.svg");
 
   let fillColor = "#000000";
@@ -21,7 +21,6 @@ export function setupCanvas(canvasId) {
   // DOM references
   const drawingColorEl = document.getElementById("drawing-color");
   const drawingLineWidthEl = document.getElementById("drawing-line-width");
-  
   const toggleDrawModeEl = document.getElementById("toggle-draw-mode");
   const togglePanZoomEl = document.getElementById("toggle-pan-zoom");
   const zoomInEl = document.getElementById("zoom-in");
@@ -35,8 +34,7 @@ export function setupCanvas(canvasId) {
   updateObjectColor(canvas, drawingColorEl, fillColor);
 
   drawingLineWidthEl.onchange = function () {
-    canvas.freeDrawingBrush.width =
-      parseInt(this.value, 10) || 1;
+    canvas.freeDrawingBrush.width = parseInt(this.value, 10) || 1;
   };
 
   // Initialize center canvas logic
@@ -65,17 +63,10 @@ export function setupCanvas(canvasId) {
     updateColorPickerFromObject(canvas, drawingColorEl)
   );
 
-
-  // // Save canvas
-  // document.getElementById("save-canvas").onclick = function () {
-  //   saveCanvas(canvas);
-  // };
-
   // Initialize the rectangle tool
   const rectangleTool = new RectangleTool(canvas);
-  
 
-  // Pass rectangleTool & toggleRectangleModeEl into enablePanZoom
+  // Enable pan/zoom with reference to rectangleTool
   enablePanZoom(
     canvas,
     togglePanZoomEl,
@@ -97,7 +88,6 @@ export function setupCanvas(canvasId) {
       } else {
         // If panZoomMode is on => turn it off so user can't pan while drawing
         if (!togglePanZoomEl.disabled) {
-          // but we must also sync the button text & disable zoom
           panZoomMode = false;
           togglePanZoomEl.textContent = "Switch to Pan/Zoom Mode";
           zoomInEl.disabled = true;
@@ -114,6 +104,6 @@ export function setupCanvas(canvasId) {
       }
     };
   }
-  
+
   return { canvas, rectangleTool };
 }

@@ -73,6 +73,7 @@ export function setupCanvas(canvasId) {
 
   // Initialize the rectangle tool
   const rectangleTool = new RectangleTool(canvas);
+  
 
   // Pass rectangleTool & toggleRectangleModeEl into enablePanZoom
   enablePanZoom(
@@ -113,6 +114,6 @@ export function setupCanvas(canvasId) {
       }
     };
   }
-
-  return canvas;
+  
+  return { canvas, rectangleTool };
 }

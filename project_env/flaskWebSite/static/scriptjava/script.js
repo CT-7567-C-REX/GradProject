@@ -1,14 +1,18 @@
 import { formDataToJson, sendToEndpoint, handleFilePreview } from './utils.js';
 import { setupCanvas } from './canvas.js';
-import { setCanvasBackground, clearCanvas} from "./canvas_utils.js";
+import { setCanvasBackground, clearCanvas } from "./canvas_utils.js";
 
 
 handleFilePreview("input[type=file]", "#file-preview"); // file preview
 
 // Canvas Setup
 let predimage;
-let canvas = setupCanvas('canvas');
+let { canvas, rectangleTool } = setupCanvas("canvas");
 
+// Function to log rectangle data
+function logRectangleData() {
+  console.log(rectangleTool.drawnRectangles);
+}
 
 // Upload Form for Prediction
 function initializeUploadForm() {
@@ -47,3 +51,4 @@ const clearEl = document.getElementById("clear-canvas");
 clearEl.onclick = () => { clearCanvas(canvas, predimage)}; // keep the canvas while clearing the objects
 
 initializeUploadForm();
+logRectangleData(); // just for log

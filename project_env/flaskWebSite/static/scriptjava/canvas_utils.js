@@ -344,7 +344,7 @@ Please enter a label or description for this rectangle:`
     };
 
     this.drawnRectangles.push(rectData);
-    console.log("Stored rectangle data:", rectData);
+    //console.log("Stored rectangle data:", rectData);
 
     // Remove the original red rectangle
     this.canvas.remove(activeObj);

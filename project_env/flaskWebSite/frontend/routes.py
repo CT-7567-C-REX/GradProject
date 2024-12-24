@@ -16,13 +16,6 @@ def home():
     return render_template("index.html", form=form, title='Ana Sayfa')
 
 
-@frontend.route("/classification", methods=['GET', 'POST'])
-def classification():
-
-    return render_template("class.html", title='Classification')
-
-
-
 @frontend.route("/rlhfapi", methods=['GET', 'POST'])
 def rlhfapi():
 

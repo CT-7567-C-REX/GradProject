@@ -13,21 +13,7 @@ pep = Blueprint('pep', __name__)
 
 base_dir = Path(__file__).resolve().parents[1] 
 
-from flaskWebSite.modelARCH.tinyvgg import TinyVgg 
-
-@pep.route('/classificaiton', methods=['GET', 'POST'])
-def classificaiton():
-    data = request.get_json()
-    image = convert_json_to_pil(data)
-    model = TinyVgg(input_shape=3, hidden_units=10, output_shape=20)
-    model_path = base_dir / "modelsTrained" / "03_pytorch_computer_vision_model_2.pth"
-    model.load_state_dict(torch.load(model_path, weights_only=True))
-
-    output_class = predict_single_image(image, model)
-    
-    return jsonify({"pred": output_class})
-
-   
+  
 from flaskWebSite.modelARCH.vgg19 import VGGUNET19 
 # get a prediction
 @pep.route('/prediction', methods=['GET', 'POST'])
@@ -38,7 +24,7 @@ def prediction():
 
     model = VGGUNET19()
 
-    model_path = base_dir / "modelsTrained" / "newModel.pth.tar"
+    model_path = base_dir / "modelsTrained" / "Daft.pth.tar"
     model = model_loader(model, model_path)
 
     output_image = generate(image, model)

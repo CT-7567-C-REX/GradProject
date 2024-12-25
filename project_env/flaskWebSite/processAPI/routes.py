@@ -1,5 +1,6 @@
 from flask import Blueprint, request, jsonify
 from flaskWebSite.processAPI.utils import convert_json_to_pil, save_picture, model_loader, generate, convert_pil_to_base64, predict_single_image
+from flaskWebSite.processAPI.rlhfutils import PlanDataset, train_start
 from pathlib import Path
 import torch
 from PIL import Image
@@ -7,25 +8,23 @@ import io
 import base64
 from pathlib import Path
 
-
 # Create Blueprint
 pep = Blueprint('pep', __name__)
 
 base_dir = Path(__file__).resolve().parents[1] 
-
   
-from flaskWebSite.modelARCH.vgg19 import VGGUNET19 
+from flaskWebSite.modelARCH.vgg19 import VGGUNET19
+model = VGGUNET19()
+
+model_path = base_dir / "modelsTrained" / "Daft.pth.tar"
+model = model_loader(model, model_path)
+
 # get a prediction
 @pep.route('/prediction', methods=['GET', 'POST'])
 def prediction():
     data = request.get_json()
 
     image = convert_json_to_pil(data)
-
-    model = VGGUNET19()
-
-    model_path = base_dir / "modelsTrained" / "Daft.pth.tar"
-    model = model_loader(model, model_path)
 
     output_image = generate(image, model)
 
@@ -36,36 +35,21 @@ def prediction():
 @pep.route('/rlhfprocess', methods=['POST'])
 def rlhf_process():
     try:
-        # Parse JSON data from the request
-        data = request.get_json()
-
-        # Extract fields from the JSON
-        base64_original_image = data.get('image')  
-        base64_pred_image = data.get('predImage')  
-        rectangles = data.get('rectangles', [])
-
-        # Convert Base64 to PIL
-        if base64_original_image:
-            original_image = Image.open(io.BytesIO(base64.b64decode(base64_original_image)))
-            original_image.show()
-
         
-        if base64_pred_image:
-            pred_image = Image.open(io.BytesIO(base64.b64decode(base64_pred_image)))
-            pred_image.show()
+        data = request.get_json()# JSON data
+        
+        rectangles = data.get('rectangles', [])# Extract bbox
+        extracted_data = [ {"boundingBox": rect.get("boundingBox"), "label": rect.get("label", "No label provided")} for rect in rectangles] # reformat the data
 
-        print(f"Number of rectangles: {len(rectangles)}", flush=True)
-        for idx, rect_data in enumerate(rectangles, start=1):
-            print(f"Rectangle #{idx}:", flush=True)
-            print("  Label:", rect_data.get('label'), flush=True)
-            print("  Bounding Box:", rect_data.get('boundingBox'), flush=True)
-            print("  Corners:", rect_data.get('corners'), flush=True)
-            print("-----", flush=True)
+        original_image = Image.open(io.BytesIO(base64.b64decode(data.get('image')))).convert('RGB') # Extract original image
+        pred_image = Image.open(io.BytesIO(base64.b64decode(data.get('predImage')))).convert('RGB') # Extract predicted image
 
-       
-        return jsonify({"success": True, "message": "Images displayed and rectangle details logged."})
+        # Initialize dataset with the in-memory image
+        dataset = PlanDataset(image=original_image, transform=None)
+        train_dataloader = torch.utils.data.DataLoader(dataset, batch_size=1, shuffle=False)
+        
+        train_start(model, train_dataloader, rectangles, torch.device('cpu'))
 
+        return jsonify({"success": True, "message": "Bounding box and label data extracted.", "data": extracted_data})
     except Exception as e:
-        print(f"Error processing data: {e}")
-        return jsonify({"success": False, "message": f"Error: {str(e)}"}), 500
-
+        return jsonify({"success": False, "message": str(e)})

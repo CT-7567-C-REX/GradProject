@@ -194,7 +194,6 @@ export function saveCanvas(canvas) {
     format: "png",
     quality: 1.0,
   });
-
   const link = document.createElement("a");
   link.href = dataURL;
   link.download = "canvas-image.png";
@@ -230,7 +229,10 @@ export function updateObjectColor(canvas, drawingColorEl, fillColor) {
  * RectangleTool draws a red rectangle, then upon mouse up:
  * - Removes the red rect
  * - Draws two green bounding boxes (scaling normally)
- * - Logs bounding box data: topLeft, width, height, corners
+ * - Logs bounding box data
+ * 
+ * Now uses the “currentLabel” instead of prompting the user,
+ * and logs that label in the console so you can verify it.
  */
 export class RectangleTool {
   constructor(canvas) {
@@ -238,10 +240,15 @@ export class RectangleTool {
     this.isDrawing = false;
     this.origX = 0;
     this.origY = 0;
-    // All rectangle data is stored here
     this.drawnRectangles = [];
+    this.currentLabel = null;
 
+    // Ensure events are bound
     this.bindEvents();
+  }
+
+  setLabel(label) {
+    this.currentLabel = label;
   }
 
   bindEvents() {
@@ -310,24 +317,17 @@ export class RectangleTool {
     const width = activeObj.width * activeObj.scaleX;
     const height = activeObj.height * activeObj.scaleY;
 
-    // Corner coordinates
     const topLeft = { x: left, y: top };
     const topRight = { x: left + width, y: top };
     const bottomLeft = { x: left, y: top + height };
     const bottomRight = { x: left + width, y: top + height };
 
-    // Prompt user
-    const userLabel = prompt(
-      `Coordinates of the drawn rectangle:
-       Top Left: (${topLeft.x.toFixed(2)}, ${topLeft.y.toFixed(2)})
-       Width: ${width.toFixed(2)}, Height: ${height.toFixed(2)}
-
-Please enter a label or description for this rectangle:`
-    );
+    // Use the current label if available
+    const usedLabel = this.currentLabel || "No label provided";
 
     // Store data
     const rectData = {
-      label: userLabel || "No label provided",
+      label: usedLabel,
       boundingBox: {
         topLeftX: left,
         topLeftY: top,
@@ -343,6 +343,9 @@ Please enter a label or description for this rectangle:`
     };
 
     this.drawnRectangles.push(rectData);
+
+    // Log it to confirm the label
+    console.log(`Created rectangle with label: ${usedLabel}`, rectData);
 
     // Remove the original red rectangle
     this.canvas.remove(activeObj);

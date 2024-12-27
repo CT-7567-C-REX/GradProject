@@ -15,11 +15,11 @@ class CustomBBoxLoss(nn.Module):
 
     def get_the_class(self, color):
         color_mapping = {
-            0: (0, 0, 0),
-            1: (255, 80, 80),
-            2: (80, 80, 255),
-            3: (255, 255, 0),
-            4: (255, 255, 255),
+            0: (0, 0, 0),       # Walls
+            1: (255, 80, 80),   # Iwan
+            2: (80, 80, 255),   # Room
+            3: (255, 255, 0),   # Stairs
+            4: (255, 255, 255), # Background
         }
 
         # Find the class
@@ -59,7 +59,7 @@ class CustomBBoxLoss(nn.Module):
             )
 
             # Compute MSE loss for the current bounding box
-            loss += self.mse_loss(pred_region, target_tensor)
+            loss += self.mse_loss(pred_region, target_tensor) 
 
         # Normalize the loss by the number of bounding boxes
         return loss / len(bbox_target_list)
@@ -97,7 +97,7 @@ def train_start(model, train_dataloader, bbox_target_list, device):
         for idx, img_batch in enumerate(train_dataloader):
             img_batch = img_batch.to(device)  # img_batch already has dimension
 
-            optimizer.zero_grad()
+            optimizer.zero_grad()   #grad aug bağlantısı
 
             pred = model(img_batch)  # Get model predictions
 

@@ -102,19 +102,19 @@ document.addEventListener("DOMContentLoaded", () => {
 
   if (btnWhite && btnBlack && btnRed && btnGreen && btnBlue) {
     btnWhite.onclick = () => {
-      rectangleTool.setLabel("(255,255,255)");
+      rectangleTool.setLabel("(255,255,255)"); // background color
     };
     btnBlack.onclick = () => {
-      rectangleTool.setLabel("(0,0,0)");
+      rectangleTool.setLabel("(0,0,0)"); // walls
     };
     btnRed.onclick = () => {
-      rectangleTool.setLabel("(255,0,0)");
+      rectangleTool.setLabel("(255,80,80)"); // ıwan
     };
     btnGreen.onclick = () => {
-      rectangleTool.setLabel("(0,255,0)");
+      rectangleTool.setLabel("(255,255,0)"); // stairs
     };
     btnBlue.onclick = () => {
-      rectangleTool.setLabel("(0,0,255)");
+      rectangleTool.setLabel("(80,80,255)"); // room
     };
   }
 });

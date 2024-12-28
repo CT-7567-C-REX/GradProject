@@ -28,14 +28,6 @@ export function clearCanvas(canvas, img) {
   }
 }
 
-export function updateColorPickerFromObject(canvas, colorEl) {
-  const activeObject = canvas.getActiveObject();
-  if (activeObject) {
-    const currentColor = activeObject.fill || activeObject.stroke || "#000000";
-    colorEl.value = currentColor;
-  }
-}
-
 /**
  * Updated enablePanZoom that:
  * - Toggles panZoomMode

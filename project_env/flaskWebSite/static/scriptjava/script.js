@@ -91,6 +91,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const clearEl = document.getElementById("clear-canvas");
   clearEl.onclick = () => {
     clearCanvas(canvas, predimage);
+    rectangleTool = {}; // clear the box datas
   };
 
   // Label Buttons => set label in rectangleTool

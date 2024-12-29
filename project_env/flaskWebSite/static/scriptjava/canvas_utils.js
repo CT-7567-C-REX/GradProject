@@ -185,17 +185,6 @@ export function enablePanZoom(
   });
 }
 
-export function saveCanvas(canvas) {
-  const dataURL = canvas.toDataURL({
-    format: "png",
-    quality: 1.0,
-  });
-  const link = document.createElement("a");
-  link.href = dataURL;
-  link.download = "canvas-image.png";
-  link.click();
-}
-
 export function updateObjectColor(canvas, drawingColorEl, fillColor) {
   drawingColorEl.onchange = function () {
     fillColor = this.value;

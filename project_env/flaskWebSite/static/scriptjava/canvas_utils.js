@@ -18,8 +18,11 @@ export function setCanvasBackground(canvas, imageUrl) {
   });
 }
 
-export function clearCanvas(canvas, img) {
+export function clearCanvas(canvas, img, rectangleTool) {
   canvas.clear(); // Clear everything on the canvas
+  if (rectangleTool) {
+    rectangleTool.drawnRectangles = []; // Clear rectangle data
+  }
   if (img) {
     setCanvasBackground(canvas, img); // Reset the background with the provided image
   } else {
@@ -27,6 +30,7 @@ export function clearCanvas(canvas, img) {
     console.log("Default background applied.");
   }
 }
+
 
 /**
  * Updated enablePanZoom that:

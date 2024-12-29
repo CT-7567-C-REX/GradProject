@@ -86,13 +86,14 @@ document.addEventListener("DOMContentLoaded", () => {
       "Save canvas button not found. Ensure the button is defined in your HTML."
     );
   }
+});
 
-  // Clear Canvas
-  const clearEl = document.getElementById("clear-canvas");
-  clearEl.onclick = () => {
-    clearCanvas(canvas, predimage);
-    rectangleTool = {}; // clear the box datas
-  };
+// Clear Canvas
+const clearEl = document.getElementById("clear-canvas");
+clearEl.onclick = () => {
+  clearCanvas(canvas, predimage, rectangleTool); // Clear canvas and reset rectangle data
+};
+
 
   // Label Buttons => set label in rectangleTool
   const btnWhite = document.getElementById("btn-label-white");
@@ -118,6 +119,5 @@ document.addEventListener("DOMContentLoaded", () => {
       rectangleTool.setLabel("(80,80,255)"); // room
     };
   }
-});
 
 initializeUploadForm();

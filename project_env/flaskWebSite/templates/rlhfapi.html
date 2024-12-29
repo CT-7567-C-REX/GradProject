@@ -50,71 +50,21 @@
             <button id="zoom-out" class="btn btn-secondary"><i class="bi bi-zoom-out mx-1"></i>Zoom Out</button>
             <button id="toggle-pan-zoom" class="btn btn-secondary">Switch to Pan/Zoom Mode</button>
             <button id="undo" class="btn btn-secondary"><i class="bi bi-arrow-counterclockwise"></i>Undo</button>
-          </div>
-      
-          <!-- Drawing Options -->
-          <div class="row mb-3">
-            <div class="col-6">
-              <label for="drawing-color" class="form-label">Drawing Color:</label>
-              <input type="color" id="drawing-color" class="form-control form-control-color" value="#000000" title="Choose your color">
-            </div>
-            <div class="col-6">
-              <label for="drawing-line-width" class="form-label">Line Width:</label>
-              <input type="number" id="drawing-line-width" class="form-control" value="5" min="1" max="100">
-            </div>
-          </div>
-      
+          </div>     
           <!-- Drawing Mode and Clear Canvas -->
           <div class="d-flex justify-content-center gap-2 mt-3">
-            <button id="toggle-draw-mode" class="btn btn-primary">Enter Draw Mode</button>
             <button id="toggle-rectangle-mode" class="btn btn-primary">Enter Rectangle Mode</button>
             <button id="clear-canvas" class="btn btn-danger">Clear Canvas</button>
             <button id="center-canvas" class="btn btn-primary">Center Canvas</button>
             <button id="save-canvas" class="btn btn-primary">Done</button>
           </div>
-
           <!-- Classification Buttons for bounding boxes -->
           <div class="d-flex justify-content-center gap-2 mt-3">
-            <!-- White -->
-            <button
-              id="btn-label-white"
-              class="btn"
-              style="background-color: #ffffff; color: #000000;"
-            >
-              White
-            </button>
-            <!-- Black -->
-            <button
-              id="btn-label-black"
-              class="btn"
-              style="background-color: #000000; color: #ffffff;"
-            >
-              Black
-            </button>
-            <!-- Red -->
-            <button
-              id="btn-label-red"
-              class="btn"
-              style="background-color: #ff0000; color: #ffffff;"
-            >
-              Red
-            </button>
-            <!-- Green -->
-            <button
-              id="btn-label-green"
-              class="btn"
-              style="background-color: #00ff00; color: #000000;"
-            >
-              Green
-            </button>
-            <!-- Blue -->
-            <button
-              id="btn-label-blue"
-              class="btn"
-              style="background-color: #0000ff; color: #ffffff;"
-            >
-              Blue
-            </button>
+              <button type="button" class="btn btn-outline-light text-dark" id="btn-label-white">Background</button>
+              <button type="button" class="btn btn-outline-dark" id="btn-label-black">Walls</button>
+              <button type="button" class="btn btn-outline-danger" id="btn-label-red">Iwan</button>
+              <button type="button" class="btn btn-outline-warning" id="btn-label-green">Stairs</button>
+              <button type="button" class="btn btn-outline-info" id="btn-label-blue">Room</button>
           </div>
         </div>
       </div>

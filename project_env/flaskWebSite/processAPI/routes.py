@@ -47,6 +47,7 @@ def rlhf_process():
         # Initialize dataset with the in-memory image
         dataset = PlanDataset(image=original_image, transform=None)
         train_dataloader = torch.utils.data.DataLoader(dataset, batch_size=1, shuffle=False)
+        print(extracted_data)
         
         train_start(model, train_dataloader, rectangles, torch.device('cpu'))
 

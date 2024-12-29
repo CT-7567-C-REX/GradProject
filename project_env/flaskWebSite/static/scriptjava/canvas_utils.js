@@ -18,8 +18,11 @@ export function setCanvasBackground(canvas, imageUrl) {
   });
 }
 
-export function clearCanvas(canvas, img) {
+export function clearCanvas(canvas, img, rectangleTool) {
   canvas.clear(); // Clear everything on the canvas
+  if (rectangleTool) {
+    rectangleTool.drawnRectangles = []; // Clear rectangle data
+  }
   if (img) {
     setCanvasBackground(canvas, img); // Reset the background with the provided image
   } else {
@@ -28,13 +31,6 @@ export function clearCanvas(canvas, img) {
   }
 }
 
-export function updateColorPickerFromObject(canvas, colorEl) {
-  const activeObject = canvas.getActiveObject();
-  if (activeObject) {
-    const currentColor = activeObject.fill || activeObject.stroke || "#000000";
-    colorEl.value = currentColor;
-  }
-}
 
 /**
  * Updated enablePanZoom that:

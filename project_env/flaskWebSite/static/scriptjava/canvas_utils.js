@@ -382,6 +382,9 @@ export class RectangleTool {
     // Discard selection
     this.canvas.discardActiveObject();
     this.canvas.renderAll();
+
+    this.drawnRectangles.push(rectData);
+    updateRectangleTable(this.drawnRectangles); // Tabloyu güncelle
   }
 
   isEnable() {
@@ -395,4 +398,22 @@ export class RectangleTool {
   disable() {
     this.isDrawing = false;
   }
+}
+function updateRectangleTable(rectangles) {
+  const tableBody = document.querySelector("#rectangle-table tbody");
+  tableBody.innerHTML = ""; // Tabloyu sıfırla
+
+  rectangles.forEach((rect, index) => {
+    const row = document.createElement("tr");
+
+    row.innerHTML = `
+      <td>${index + 1}</td>
+      <td>${rect.label}</td>
+      <td>(${rect.boundingBox.topLeftX.toFixed(2)}, ${rect.boundingBox.topLeftY.toFixed(2)})</td>
+      <td>${rect.boundingBox.width.toFixed(2)}</td>
+      <td>${rect.boundingBox.height.toFixed(2)}</td>
+    `;
+
+    tableBody.appendChild(row);
+  });
 }

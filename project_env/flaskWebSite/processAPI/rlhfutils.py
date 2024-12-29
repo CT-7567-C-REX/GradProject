@@ -9,17 +9,64 @@ import numpy as np
 from PIL import Image
 import os
 
-albumentations_transform = A.Compose(
-    [
-        A.Rotate(limit=(90, 90), p=1.0), 
-    ],
-    bbox_params=A.BboxParams(
-        format='coco',         # we have [x, y, width, height]
-        label_fields=['labels'],
-        min_area=1,
-        min_visibility=0.1
-    )
-)
+
+def rotate_90(image_np, bboxes):
+    """
+    Rotates the image 90 degrees clockwise (top-left corner as the origin),
+    and updates bounding boxes accordingly.
+
+    image_np: (H, W, C) NumPy array
+    bboxes: list of dicts => {
+       'boundingBox': {'topLeftX','topLeftY','width','height'},
+       'label': '(R,G,B)'
+    }
+
+    Returns:
+      rotated_img_np: (W, H, C)  # dimensions swapped
+      rotated_bboxes: same structure, but x,y,w,h for the rotated version
+    """
+    old_h, old_w = image_np.shape[:2]
+
+    # Rotate image 90 deg clockwise => swap axes & flip
+    # np.rot90(img, k=1) rotates 90 deg *counter-clockwise* by default.
+    # So let's do this manually or do k=3 for clockwise.
+    # For clarity, let's do manual approach:
+
+    rotated_img_np = np.transpose(image_np, (1,0,2))  # (W,H,C)
+    rotated_img_np = np.flipud(rotated_img_np)        # flip along vertical axis => 90 deg clockwise
+
+    # Now we must rotate each bounding box 90 deg clockwise around top-left (0,0).
+    # Original bounding box: (x, y, w, h)
+    # After 90 deg clockwise:
+    #   new_x = y
+    #   new_y = old_w - x - w
+    #   new_w = h
+    #   new_h = w
+
+    rotated_bboxes = []
+    for rect in bboxes:
+        x = rect['boundingBox']['topLeftX']
+        y = rect['boundingBox']['topLeftY']
+        w = rect['boundingBox']['width']
+        h = rect['boundingBox']['height']
+
+        new_x = y
+        new_y = old_w - x - w
+        new_w = h
+        new_h = w
+
+        rotated_bboxes.append({
+            'boundingBox': {
+                'topLeftX': new_x,
+                'topLeftY': new_y,
+                'width': new_w,
+                'height': new_h
+            },
+            'label': rect['label']
+        })
+
+    return rotated_img_np, rotated_bboxes
+
 
 class CustomBBoxLoss(nn.Module):
     def __init__(self):
@@ -34,38 +81,30 @@ class CustomBBoxLoss(nn.Module):
             3: (255, 255, 0),   # Stairs
             4: (255, 255, 255), # Background
         }
-
         for class_id, mapped_color in color_mapping.items():
             if color == mapped_color:
                 return class_id
-
         raise ValueError(f"Color {color} does not match any known class.")
 
     def forward(self, pred, bbox_target_list):
-        # pred => (B,1,H,W). We'll assume B=1 for your single image
         loss = 0.0
-
         for item in bbox_target_list:
             bbox = item['boundingBox']
             x1, y1 = bbox['topLeftX'], bbox['topLeftY']
             width, height = bbox['width'], bbox['height']
 
-            # Parse (R,G,B)
+            # Parse label => (R,G,B)
             target_color = tuple(map(int, item['label'][1:-1].split(',')))
             target_class = self.get_the_class(target_color)
 
-            # Crop out region from pred[0]
+            # Crop from pred[0]
             pred_region = TF.crop(pred[0], top=y1, left=x1, height=height, width=width)
-            pred_region = pred_region.squeeze(0)  # shape => (regionH, regionW)
+            pred_region = pred_region.squeeze(0)  # (H, W)
 
-            # Build the target tensor
-            target_tensor = torch.full(
-                pred_region.shape,
-                target_class,
-                dtype=pred_region.dtype,
-                device=pred_region.device
-            )
-
+            target_tensor = torch.full(pred_region.shape,
+                                       target_class,
+                                       dtype=pred_region.dtype,
+                                       device=pred_region.device)
             loss += self.mse_loss(pred_region, target_tensor)
 
         if len(bbox_target_list) > 0:
@@ -75,82 +114,66 @@ class CustomBBoxLoss(nn.Module):
 
 
 class PlanDataset(Dataset):
-    def __init__(self, image, rectangles, transform=None):
+    """
+    This dataset returns *two items* for the single input image:
+      0 => The original image + bounding boxes
+      1 => The same image rotated 90 deg + bounding boxes
+    """
+    def __init__(self, image, rectangles):
+        """
+        image: PIL Image
+        rectangles: list of dicts => {
+          'boundingBox': {...}, 'label': '(R,G,B)'
+        }
+        """
         self.image = image
         self.rectangles = rectangles
-        self.transform = transform
+
+        # Convert the PIL to numpy for convenience
+        self.image_np = np.array(self.image)  # shape (H,W,C)
 
     def __len__(self):
-        # For demo, we'll assume 1 item
-        return 1
+        return 2  # We'll yield two samples: original + rotated
 
     def __getitem__(self, index):
-        # Convert the PIL image to a NumPy array (H, W, C)
-        image_np = np.array(self.image)
+        if index == 0:
+            # 1) Original
+            # Print bounding boxes
+            print("\n[DATASET] Original bounding boxes:")
+            for i, r in enumerate(self.rectangles):
+                bb = r['boundingBox']
+                print(f"  Box {i+1}: x={bb['topLeftX']}, y={bb['topLeftY']}, w={bb['width']}, h={bb['height']}  Label={r['label']}")
+            # Convert to tensor
+            plan_tensor = torch.from_numpy(self.image_np.transpose(2,0,1)).float()
+            return plan_tensor, self.rectangles
 
-        # Prepare bounding boxes in COCO format: [x_min, y_min, width, height]
-        bboxes = []
-        labels = []
-        for rect in self.rectangles:
-            box = rect['boundingBox']
-            x, y = box['topLeftX'], box['topLeftY']
-            w, h = box['width'], box['height']
-            bboxes.append([x, y, w, h])
-            labels.append(rect.get('label', 'No label'))
-
-        if self.transform is not None:
-            transformed = self.transform(
-                image=image_np,
-                bboxes=bboxes,
-                labels=labels
-            )
         else:
-            # No transform => just pass them through
-            transformed = {
-                'image': image_np,
-                'bboxes': bboxes,
-                'labels': labels
-            }
+            # 2) Rotated 90 deg
+            rotated_img_np, rotated_bboxes = rotate_90(self.image_np, self.rectangles)
 
-        transformed_image = transformed['image']    # NumPy array (H, W, C)
-        transformed_bboxes = transformed['bboxes']  # list of [x, y, w, h]
-        transformed_labels = transformed['labels']  # list of labels
+            print("\n[DATASET] Rotated bounding boxes:")
+            for i, r in enumerate(rotated_bboxes):
+                bb = r['boundingBox']
+                print(f"  Box {i+1}: x={bb['topLeftX']}, y={bb['topLeftY']}, w={bb['width']}, h={bb['height']}  Label={r['label']}")
 
-        # Convert the (H, W, C) array into a Torch tensor (C, H, W)
-        plan_tensor = torch.from_numpy(transformed_image.transpose(2, 0, 1)).float()
-
-        # Reformat bounding boxes and labels into the requested structure
-        formatted_bboxes = []
-        for box, label in zip(transformed_bboxes, transformed_labels):
-            x, y, w, h = box
-            formatted_bboxes.append({
-                'boundingBox': {
-                    'topLeftX': x,
-                    'topLeftY': y,
-                    'width': w,
-                    'height': h
-                },
-                'label': label
-            })
-
-        # Return the image tensor and the new list of dicts
-        return plan_tensor, formatted_bboxes
+            plan_tensor = torch.from_numpy(rotated_img_np.transpose(2,0,1)).float()
+            return plan_tensor, rotated_bboxes
 
 
 def train_start(model, train_dataloader, bbox_target_list, device):
+    """
+    Example training loop. You might not use it if you're just printing.
+    """
     criterion = CustomBBoxLoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=5e-6, betas=(0.9,0.999))
 
     model.train()
-    for epoch in range(1):  # Single epoch
+    for epoch in range(1):
         for idx, (img_batch, final_bboxes) in enumerate(train_dataloader):
             img_batch = img_batch.to(device)
-
             optimizer.zero_grad()
-            pred = model(img_batch)  # shape => (B,1,H,W)
-
+            pred = model(img_batch)
             loss = criterion(pred, final_bboxes)
             loss.backward()
             optimizer.step()
-
             print(f"Epoch {epoch+1}, Batch {idx+1}, Loss: {loss.item()}")

@@ -338,8 +338,6 @@ export class RectangleTool {
       },
     };
 
-    this.drawnRectangles.push(rectData);
-
     // Log it to confirm the label
     console.log(`Created rectangle with label: ${usedLabel}`, rectData);
 

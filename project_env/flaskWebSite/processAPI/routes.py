@@ -1,94 +1,107 @@
 from flask import Blueprint, request, jsonify
-from flaskWebSite.processAPI.utils import (
-    convert_json_to_pil,
-    model_loader,
-    generate,
-    convert_pil_to_base64
-)
-from flaskWebSite.processAPI.rlhfutils import (
-    PlanDataset,  # The dataset that yields original+rotated items
-    train_start
-)
+from flaskWebSite.processAPI.utils import convert_json_to_pil, save_picture, model_loader, generate, convert_pil_to_base64, predict_single_image
+from flaskWebSite.processAPI.rlhfutils import PlanDataset, train_start
 from pathlib import Path
 import torch
 from PIL import Image
 import io
 import base64
+from pathlib import Path
+import numpy as np
+import albumentations as A
 
+# Create Blueprint
 pep = Blueprint('pep', __name__)
-base_dir = Path(__file__).resolve().parents[1]
 
-# Import your model architecture
+base_dir = Path(__file__).resolve().parents[1] 
+  
 from flaskWebSite.modelARCH.vgg19 import VGGUNET19
 model = VGGUNET19()
 
-# Load the trained model from disk
 model_path = base_dir / "modelsTrained" / "Daft.pth.tar"
 model = model_loader(model, model_path)
 
-@pep.route('/prediction', methods=['GET','POST'])
+# get a prediction
+@pep.route('/prediction', methods=['GET', 'POST'])
 def prediction():
-    """
-    Endpoint: /prediction
-    Receives { "image": base64Data }, 
-    returns { "image": <base64 of the model's output> }
-    """
     data = request.get_json()
+
     image = convert_json_to_pil(data)
+
     output_image = generate(image, model)
+
     output_base64 = convert_pil_to_base64(output_image)
+
     return jsonify({"image": output_base64})
 
 @pep.route('/rlhfprocess', methods=['POST'])
 def rlhf_process():
-    """
-    Endpoint: /rlhfprocess
-    Receives JSON with:
-      - "image": base64 data for the original image
-      - "predImage": base64 data for the predicted image (not used here, but available)
-      - "rectangles": array of { "boundingBox": {...}, "label": "(R,G,B)" }
-
-    We'll:
-      1) Convert the base64 to a PIL image
-      2) Create our PlanDataset => yields 2 items: 
-         - Index 0 => original image + bounding boxes
-         - Index 1 => rotated image + bounding boxes
-      3) Print bounding boxes in the console to verify
-      4) (Optional) run train_start(...) on that data
-    """
     try:
-        data = request.get_json()
-        rectangles = data.get('rectangles', [])
+        
+        data = request.get_json()# JSON data
+        
+        rectangles = data.get('rectangles', [])# Extract bbox
+        extracted_data = [ {"boundingBox": rect.get("boundingBox"), "label": rect.get("label", "No label provided")} for rect in rectangles] # reformat the data
 
-        # Print user-provided rectangles
-        print("[ROUTE] Original rectangles from user =>", rectangles)
+        original_image = Image.open(io.BytesIO(base64.b64decode(data.get('image')))).convert('RGB') # Extract original image
+        pred_image = Image.open(io.BytesIO(base64.b64decode(data.get('predImage')))).convert('RGB') # Extract predicted image
 
-        # Convert the user image from base64 to PIL
-        original_image_data = base64.b64decode(data.get('image', ''))
-        original_image = Image.open(io.BytesIO(original_image_data)).convert('RGB')
+        alb_bboxes = []
+        alb_labels = []
+        for rect in extracted_data:
+            bb = rect['boundingBox']
+            label = rect['label']
+            
+            x = bb['topLeftX']
+            y = bb['topLeftY']
+            w = bb['width']
+            h = bb['height']
+            
+            alb_bboxes.append([x, y, w, h])
+            alb_labels.append(label)
 
-        # Create the dataset that yields original + rotated items
-        dataset = PlanDataset(image=original_image, rectangles=rectangles)
+        transform_90 = A.Compose(
+            [
+                A.Rotate(limit=[90, 90], p=1.0)
+            ],
+            bbox_params=A.BboxParams(format='coco', label_fields=['labels'])
+        )
+        augmented = transform_90(
+            image=np.array(original_image),
+            bboxes=alb_bboxes,
+            labels=alb_labels
+        )
+         # Convert augmented image (NumPy array) back to PIL
+        aug_image = Image.fromarray(augmented['image'])
+        aug_bboxes = augmented['bboxes']  # still in COCO format => [x, y, w, h]
 
-        # We'll use a DataLoader with batch_size=1
-        dataloader = torch.utils.data.DataLoader(dataset, batch_size=1, shuffle=False)
+        aug_bboxes_data = []
+        for bbox, label in zip(aug_bboxes, alb_labels):
+            x, y, w, h = bbox
+            aug_bboxes_data.append({
+                'boundingBox': {
+                    'topLeftX': int(x),
+                    'topLeftY': int(y),
+                    'width': int(w),
+                    'height': int(h)
+                },
+                'label': label
+            })
 
-        # Example: just iterate to show the bounding boxes printed
-        for i, (img_tensor, box_data) in enumerate(dataloader):
-            print(f"\n[ROUTE] DataLoader iteration {i}")
-            print("Image shape =>", img_tensor.shape)
-            # 'box_data' is the bounding boxes for either original or rotated
+        images_list = [original_image, aug_image]   # Both are PIL Image objects
+        bboxes_list = [extracted_data, aug_bboxes_data]
 
-        # If you want to run a training pass with your model, uncomment below:
-        """
-        device = torch.device('cpu')
-        train_start(model, dataloader, rectangles, device)
-        """
+        images_list[1].show()
+        print("Augmented BBoxes:", aug_bboxes_data)
 
-        return jsonify({
-            "success": True,
-            "message": "Printed bounding boxes for original + 90deg image in console."
-        })
+
+        # Initialize dataset with the in-memory image
+        dataset = PlanDataset(image=original_image, transform=None)
+        train_dataloader = torch.utils.data.DataLoader(dataset, batch_size=1, shuffle=False)
+        print(extracted_data)
+        
+        train_start(model, train_dataloader, rectangles, torch.device('cpu'))
+
+        return jsonify({"success": True, "message": "Bounding box and label data extracted.", "data": extracted_data})
     except Exception as e:
-        # Return the error message so the front end sees "Processing failed"
         return jsonify({"success": False, "message": str(e)})

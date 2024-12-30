@@ -1,72 +1,12 @@
-import albumentations as A
-import torchvision.transforms.functional as TF
-from albumentations.pytorch.transforms import ToTensorV2  # optional
 import torch
-from torch import nn
-import torch.nn.functional as F
+from PIL import Image
+import torchvision.transforms as transforms
 from torch.utils.data import Dataset
 import numpy as np
-from PIL import Image
+import torch
 import os
-
-
-def rotate_90(image_np, bboxes):
-    """
-    Rotates the image 90 degrees clockwise (top-left corner as the origin),
-    and updates bounding boxes accordingly.
-
-    image_np: (H, W, C) NumPy array
-    bboxes: list of dicts => {
-       'boundingBox': {'topLeftX','topLeftY','width','height'},
-       'label': '(R,G,B)'
-    }
-
-    Returns:
-      rotated_img_np: (W, H, C)  # dimensions swapped
-      rotated_bboxes: same structure, but x,y,w,h for the rotated version
-    """
-    old_h, old_w = image_np.shape[:2]
-
-    # Rotate image 90 deg clockwise => swap axes & flip
-    # np.rot90(img, k=1) rotates 90 deg *counter-clockwise* by default.
-    # So let's do this manually or do k=3 for clockwise.
-    # For clarity, let's do manual approach:
-
-    rotated_img_np = np.transpose(image_np, (1,0,2))  # (W,H,C)
-    rotated_img_np = np.flipud(rotated_img_np)        # flip along vertical axis => 90 deg clockwise
-
-    # Now we must rotate each bounding box 90 deg clockwise around top-left (0,0).
-    # Original bounding box: (x, y, w, h)
-    # After 90 deg clockwise:
-    #   new_x = y
-    #   new_y = old_w - x - w
-    #   new_w = h
-    #   new_h = w
-
-    rotated_bboxes = []
-    for rect in bboxes:
-        x = rect['boundingBox']['topLeftX']
-        y = rect['boundingBox']['topLeftY']
-        w = rect['boundingBox']['width']
-        h = rect['boundingBox']['height']
-
-        new_x = y
-        new_y = old_w - x - w
-        new_w = h
-        new_h = w
-
-        rotated_bboxes.append({
-            'boundingBox': {
-                'topLeftX': new_x,
-                'topLeftY': new_y,
-                'width': new_w,
-                'height': new_h
-            },
-            'label': rect['label']
-        })
-
-    return rotated_img_np, rotated_bboxes
-
+import torch.nn as nn
+import torchvision.transforms.functional as TF
 
 class CustomBBoxLoss(nn.Module):
     def __init__(self):
@@ -81,99 +21,89 @@ class CustomBBoxLoss(nn.Module):
             3: (255, 255, 0),   # Stairs
             4: (255, 255, 255), # Background
         }
+
+        # Find the class
         for class_id, mapped_color in color_mapping.items():
             if color == mapped_color:
                 return class_id
+
+        # Raise an error if color is invalid
         raise ValueError(f"Color {color} does not match any known class.")
 
     def forward(self, pred, bbox_target_list):
         loss = 0.0
+
         for item in bbox_target_list:
+            # Extract bounding box coordinates
             bbox = item['boundingBox']
             x1, y1 = bbox['topLeftX'], bbox['topLeftY']
             width, height = bbox['width'], bbox['height']
 
-            # Parse label => (R,G,B)
-            target_color = tuple(map(int, item['label'][1:-1].split(',')))
+            # Parse and map the target color to its class
+            target_color = tuple(map(int, item['label'][1:-1].split(',')))  # Convert '(R,G,B)' to (R, G, B)
             target_class = self.get_the_class(target_color)
 
-            # Crop from pred[0]
-            pred_region = TF.crop(pred[0], top=y1, left=x1, height=height, width=width)
-            pred_region = pred_region.squeeze(0)  # (H, W)
+            # Extract the corresponding region from the prediction
+            pred_region = TF.crop(pred, top=y1, left=x1, height=height, width=width)  # shape: (1, H, W)
+            #pred_region = torch.round(pred_region)
 
-            target_tensor = torch.full(pred_region.shape,
-                                       target_class,
-                                       dtype=pred_region.dtype,
-                                       device=pred_region.device)
-            loss += self.mse_loss(pred_region, target_tensor)
+            # Since `pred` is single-channel, squeeze to simplify
+            pred_region = pred_region.squeeze(0)  # shape: (H, W)
 
-        if len(bbox_target_list) > 0:
-            return loss / len(bbox_target_list)
-        else:
-            return torch.tensor(0.0, device=pred.device)
+            # Create the target tensor with the same shape as pred_region
+            target_tensor = torch.full(
+                pred_region.shape,
+                target_class,
+                dtype=pred_region.dtype,
+                device=pred_region.device
+            )
 
+            # Compute MSE loss for the current bounding box
+            loss += self.mse_loss(pred_region, target_tensor) 
 
+        # Normalize the loss by the number of bounding boxes
+        return loss / len(bbox_target_list)
+    
 class PlanDataset(Dataset):
-    """
-    This dataset returns *two items* for the single input image:
-      0 => The original image + bounding boxes
-      1 => The same image rotated 90 deg + bounding boxes
-    """
-    def __init__(self, image, rectangles):
-        """
-        image: PIL Image
-        rectangles: list of dicts => {
-          'boundingBox': {...}, 'label': '(R,G,B)'
-        }
-        """
+    def __init__(self, image, transform=None):
         self.image = image
-        self.rectangles = rectangles
-
-        # Convert the PIL to numpy for convenience
-        self.image_np = np.array(self.image)  # shape (H,W,C)
+        self.transform = transform
 
     def __len__(self):
-        return 2  # We'll yield two samples: original + rotated
+        return 1  # Single image
 
     def __getitem__(self, index):
-        if index == 0:
-            # 1) Original
-            # Print bounding boxes
-            print("\n[DATASET] Original bounding boxes:")
-            for i, r in enumerate(self.rectangles):
-                bb = r['boundingBox']
-                print(f"  Box {i+1}: x={bb['topLeftX']}, y={bb['topLeftY']}, w={bb['width']}, h={bb['height']}  Label={r['label']}")
-            # Convert to tensor
-            plan_tensor = torch.from_numpy(self.image_np.transpose(2,0,1)).float()
-            return plan_tensor, self.rectangles
+        plan = np.array(self.image).astype(np.float32)
 
-        else:
-            # 2) Rotated 90 deg
-            rotated_img_np, rotated_bboxes = rotate_90(self.image_np, self.rectangles)
+        if self.transform is not None:
+            transformed = self.transform(image=plan)
+            plan = transformed['image']
 
-            print("\n[DATASET] Rotated bounding boxes:")
-            for i, r in enumerate(rotated_bboxes):
-                bb = r['boundingBox']
-                print(f"  Box {i+1}: x={bb['topLeftX']}, y={bb['topLeftY']}, w={bb['width']}, h={bb['height']}  Label={r['label']}")
+        plan = torch.from_numpy(plan.copy().transpose((2, 0, 1)))  # (H, W, C) -> (C, H, W)
 
-            plan_tensor = torch.from_numpy(rotated_img_np.transpose(2,0,1)).float()
-            return plan_tensor, rotated_bboxes
+        return plan
 
 
 def train_start(model, train_dataloader, bbox_target_list, device):
-    """
-    Example training loop. You might not use it if you're just printing.
-    """
     criterion = CustomBBoxLoss()
-    optimizer = torch.optim.Adam(model.parameters(), lr=5e-6, betas=(0.9,0.999))
 
+    optimizer = torch.optim.Adam(
+        model.parameters(),
+        lr = 5e-6, # lr lowered for overcorrection
+        betas = (0.9, 0.999), 
+    )
     model.train()
-    for epoch in range(1):
-        for idx, (img_batch, final_bboxes) in enumerate(train_dataloader):
-            img_batch = img_batch.to(device)
-            optimizer.zero_grad()
-            pred = model(img_batch)
-            loss = criterion(pred, final_bboxes)
+    for epoch in range(1):  # Single epoch
+        for idx, img_batch in enumerate(train_dataloader):
+            img_batch = img_batch.to(device)  # img_batch already has dimension
+
+            optimizer.zero_grad()   #grad aug bağlantısı
+
+            pred = model(img_batch)  # Get model predictions
+
+            loss = criterion(pred, bbox_target_list)  # Compute loss
+
             loss.backward()
             optimizer.step()
-            print(f"Epoch {epoch+1}, Batch {idx+1}, Loss: {loss.item()}")
+
+            print(f"Epoch {epoch + 1}, Batch {idx + 1}, Loss: {loss.item()}")

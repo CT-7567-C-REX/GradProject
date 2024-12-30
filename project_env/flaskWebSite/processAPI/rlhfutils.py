@@ -64,46 +64,70 @@ class CustomBBoxLoss(nn.Module):
         # Normalize the loss by the number of bounding boxes
         return loss / len(bbox_target_list)
     
+import torch
+from torch.utils.data import Dataset
+import numpy as np
+from PIL import Image
+
 class PlanDataset(Dataset):
-    def __init__(self, image, transform=None):
-        self.image = image
+    def __init__(self, images_list, transform=None):
+        self.images_list = images_list
         self.transform = transform
 
     def __len__(self):
-        return 1  # Single image
+        return len(self.images_list)
 
     def __getitem__(self, index):
-        plan = np.array(self.image).astype(np.float32)
+        # 1) Get the image at the specified index
+        pil_image = self.images_list[index]
+        
+        # 2) Convert to NumPy array (float32)
+        plan = np.array(pil_image).astype(np.float32)
 
+        # 3) If a transform is provided, apply it
         if self.transform is not None:
             transformed = self.transform(image=plan)
             plan = transformed['image']
 
-        plan = torch.from_numpy(plan.copy().transpose((2, 0, 1)))  # (H, W, C) -> (C, H, W)
+        # 4) Convert from (H, W, C) to (C, H, W) and make a tensor
+        plan_tensor = torch.from_numpy(plan.transpose((2, 0, 1)))
 
-        return plan
+        # 5) Return the image tensor
+        return plan_tensor
 
 
-def train_start(model, train_dataloader, bbox_target_list, device):
+
+def train_start(model, train_dataloader, bboxes_list, device):
     criterion = CustomBBoxLoss()
-
     optimizer = torch.optim.Adam(
         model.parameters(),
-        lr = 5e-6, # lr lowered for overcorrection
-        betas = (0.9, 0.999), 
+        lr=5e-6,  # lowered for stability
+        betas=(0.9, 0.999),
     )
+
     model.train()
+
     for epoch in range(1):  # Single epoch
         for idx, img_batch in enumerate(train_dataloader):
-            img_batch = img_batch.to(device)  # img_batch already has dimension
+            # Move image batch to GPU/CPU device
+            img_batch = img_batch.to(device)
 
-            optimizer.zero_grad()   #grad aug bağlantısı
+            # 1) Retrieve the bounding boxes for this index
+            #    Since batch_size=1, idx matches image index
+            bbox_targets = bboxes_list[idx]
 
-            pred = model(img_batch)  # Get model predictions
+            # 2) Zero out the gradients
+            optimizer.zero_grad()
 
-            loss = criterion(pred, bbox_target_list)  # Compute loss
+            # 3) Forward pass through the model
+            pred = model(img_batch)
 
+            # 4) Compute the loss using your custom criterion
+            loss = criterion(pred, bbox_targets)
+
+            # 5) Backpropagate and update
             loss.backward()
             optimizer.step()
 
+            # 6) Print loss
             print(f"Epoch {epoch + 1}, Batch {idx + 1}, Loss: {loss.item()}")

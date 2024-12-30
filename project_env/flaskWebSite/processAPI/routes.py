@@ -96,11 +96,11 @@ def rlhf_process():
 
 
         # Initialize dataset with the in-memory image
-        dataset = PlanDataset(image=original_image, transform=None)
+        dataset = PlanDataset(images_list, transform=None)
         train_dataloader = torch.utils.data.DataLoader(dataset, batch_size=1, shuffle=False)
         print(extracted_data)
         
-        train_start(model, train_dataloader, rectangles, torch.device('cpu'))
+        train_start(model, train_dataloader, bboxes_list, torch.device('cpu'))
 
         return jsonify({"success": True, "message": "Bounding box and label data extracted.", "data": extracted_data})
     except Exception as e:

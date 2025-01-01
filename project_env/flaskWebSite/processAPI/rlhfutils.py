@@ -33,8 +33,10 @@ class CustomBBoxLoss(nn.Module):
         for item in bbox_target_list:
             # Extract bounding box coordinates
             bbox = item['boundingBox']
-            x1, y1 = bbox['topLeftX'], bbox['topLeftY']
-            width, height = bbox['width'], bbox['height']
+            x1 = int(round(bbox['topLeftX']))
+            y1 = int(round(bbox['topLeftY']))
+            width = int(round(bbox['width']))
+            height = int(round(bbox['height']))
 
             # Parse and map the target color to its class
             target_color = tuple(map(int, item['label'][1:-1].split(',')))  # Convert '(R,G,B)' to (R, G, B)

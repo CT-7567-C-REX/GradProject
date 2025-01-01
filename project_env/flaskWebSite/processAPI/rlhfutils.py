@@ -1,9 +1,10 @@
 import torch
 from torch.utils.data import Dataset
-import numpy as np
-import torch
 import torch.nn as nn
 import torchvision.transforms.functional as TF
+import albumentations as A
+from PIL import Image
+import numpy as np
 
 class CustomBBoxLoss(nn.Module):
     def __init__(self):
@@ -119,7 +120,50 @@ class PlanDataset(Dataset):
         # 5) Return the image tensor
         return plan_tensor
 
+def augment_img_bbox(original_image, extracted_data):
 
+    alb_bboxes = []
+    alb_labels = []
+    for rect in extracted_data:
+        bb = rect['boundingBox']
+        label = rect['label']
+        
+        x = bb['topLeftX']
+        y = bb['topLeftY']
+        w = bb['width']
+        h = bb['height']
+        
+        alb_bboxes.append([x, y, w, h])
+        alb_labels.append(label)
+
+    transform_90 = A.Compose(
+        [
+            A.Rotate(limit=[90, 90], p=1.0)
+        ],
+        bbox_params=A.BboxParams(format='coco', label_fields=['labels'])
+    )
+    augmented = transform_90(
+        image=np.array(original_image),
+        bboxes=alb_bboxes,
+        labels=alb_labels
+    )
+    # Convert augmented image (NumPy array) back to PIL
+    aug_image = Image.fromarray(augmented['image'])
+    aug_bboxes = augmented['bboxes']  # still in COCO format => [x, y, w, h]
+
+    aug_bboxes_data = []
+    for bbox, label in zip(aug_bboxes, alb_labels):
+        x, y, w, h = bbox
+        aug_bboxes_data.append({
+            'boundingBox': {
+                'topLeftX': int(x),
+                'topLeftY': int(y),
+                'width': int(w),
+                'height': int(h)
+            },
+            'label': label
+        })
+    return aug_image, aug_bboxes_data
 
 def train_start(model, train_dataloader, bboxes_list, device):
     criterion = CustomBBoxLoss()

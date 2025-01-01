@@ -1,14 +1,13 @@
 from flask import Blueprint, request, jsonify
 from flaskWebSite.processAPI.utils import convert_json_to_pil, model_loader, generate, convert_pil_to_base64
-from flaskWebSite.processAPI.rlhfutils import PlanDataset, train_start
+from flaskWebSite.processAPI.rlhfutils import PlanDataset, train_start, augment_img_bbox
 from pathlib import Path
 import torch
 from PIL import Image
 import io
 import base64
 from pathlib import Path
-import numpy as np
-import albumentations as A
+
 
 # Create Blueprint
 pep = Blueprint('pep', __name__)
@@ -45,53 +44,11 @@ def rlhf_process():
     original_image = Image.open(io.BytesIO(base64.b64decode(data.get('image')))).convert('RGB') # Extract original image
     pred_image = Image.open(io.BytesIO(base64.b64decode(data.get('predImage')))).convert('RGB') # Extract predicted image
 
-    alb_bboxes = []
-    alb_labels = []
-    for rect in extracted_data:
-        bb = rect['boundingBox']
-        label = rect['label']
-        
-        x = bb['topLeftX']
-        y = bb['topLeftY']
-        w = bb['width']
-        h = bb['height']
-        
-        alb_bboxes.append([x, y, w, h])
-        alb_labels.append(label)
-
-    transform_90 = A.Compose(
-        [
-            A.Rotate(limit=[90, 90], p=1.0)
-        ],
-        bbox_params=A.BboxParams(format='coco', label_fields=['labels'])
-    )
-    augmented = transform_90(
-        image=np.array(original_image),
-        bboxes=alb_bboxes,
-        labels=alb_labels
-    )
-        # Convert augmented image (NumPy array) back to PIL
-    aug_image = Image.fromarray(augmented['image'])
-    aug_bboxes = augmented['bboxes']  # still in COCO format => [x, y, w, h]
-
-    aug_bboxes_data = []
-    for bbox, label in zip(aug_bboxes, alb_labels):
-        x, y, w, h = bbox
-        aug_bboxes_data.append({
-            'boundingBox': {
-                'topLeftX': int(x),
-                'topLeftY': int(y),
-                'width': int(w),
-                'height': int(h)
-            },
-            'label': label
-        })
+    aug_image, aug_bboxes_data = augment_img_bbox(original_image, extracted_data)
 
     images_list = [original_image, aug_image]   # Both are PIL Image objects
     bboxes_list = [extracted_data, aug_bboxes_data]
-    print(bboxes_list)
 
-    # Initialize dataset with the in-memory image
     dataset = PlanDataset(images_list, transform=None)
     train_dataloader = torch.utils.data.DataLoader(dataset, batch_size=1, shuffle=False)
     

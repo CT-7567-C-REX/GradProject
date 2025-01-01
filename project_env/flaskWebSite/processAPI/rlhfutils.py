@@ -25,7 +25,7 @@ class CustomBBoxLoss(nn.Module):
             if color == mapped_color:
                 return class_id
 
-        # Raise an error if color is invalid
+        # Raise an error if no match
         raise ValueError(f"Color {color} does not match any known class.")
 
     def forward(self, pred, bbox_target_list):
@@ -44,13 +44,11 @@ class CustomBBoxLoss(nn.Module):
             target_class = self.get_the_class(target_color)
 
             # Extract the corresponding region from the prediction
-            pred_region = TF.crop(pred, top=y1, left=x1, height=height, width=width)  # shape: (1, H, W)
-            #pred_region = torch.round(pred_region)
+            pred_region = TF.crop(pred, top=y1, left=x1, height=height, width=width) 
 
-            # Since `pred` is single-channel, squeeze to simplify
-            pred_region = pred_region.squeeze(0)  # shape: (H, W)
+            pred_region = pred_region.squeeze(0) 
 
-            # Create the target tensor with the same shape as pred_region
+            # Create the target tensor
             target_tensor = torch.full(
                 pred_region.shape,
                 target_class,
@@ -58,11 +56,9 @@ class CustomBBoxLoss(nn.Module):
                 device=pred_region.device
             )
 
-            # Compute MSE loss for the current bounding box
-            loss += self.mse_loss(pred_region, target_tensor) 
+            loss += self.mse_loss(pred_region, target_tensor) # MSE loss for the current bbox
 
-        # Normalize the loss by the number of bounding boxes
-        return loss / len(bbox_target_list)
+        return loss / len(bbox_target_list)  # Normalize loss, then return
 
 class OutsideLoss(nn.Module):
     def __init__(self):
@@ -167,6 +163,7 @@ def augment_img_bbox(original_image, extracted_data):
 
 def train_start(model, train_dataloader, bboxes_list, device):
     criterion = CustomBBoxLoss()
+    criterion_outside = OutsideLoss()
     optimizer = torch.optim.Adam(
         model.parameters(),
         lr=5e-6,  # lowered for stability
@@ -177,25 +174,21 @@ def train_start(model, train_dataloader, bboxes_list, device):
 
     for epoch in range(1):  # Single epoch
         for idx, img_batch in enumerate(train_dataloader):
-            # Move image batch to GPU/CPU device
-            img_batch = img_batch.to(device)
 
-            # 1) Retrieve the bounding boxes for this index
-            #    Since batch_size=1, idx matches image index
-            bbox_targets = bboxes_list[idx]
+            img_batch = img_batch.to(device) # move to the device
 
-            # 2) Zero out the gradients
-            optimizer.zero_grad()
+            bbox_targets = bboxes_list[idx] # bbox for the current image
 
-            # 3) Forward pass through the model
-            pred = model(img_batch)
+            optimizer.zero_grad() # reset gradients
 
-            # 4) Compute the loss using your custom criterion
-            loss = criterion(pred, bbox_targets)
+            pred = model(img_batch) # make a prediction
 
-            # 5) Backpropagate and update
-            loss.backward()
+            loss = criterion(pred, bbox_targets) # loss for boxes
+    
+            loss_outside = criterion_outside(pred, bbox_targets) # loss for outside boxes
+
+            total_loss = loss + 0.1 * loss_outside # total loss
+            total_loss.backward()
             optimizer.step()
 
-            # 6) Print loss
             print(f"Epoch {epoch + 1}, Batch {idx + 1}, Loss: {loss.item()}")

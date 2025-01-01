@@ -6,8 +6,6 @@ import torch
 from PIL import Image
 import io
 import base64
-from pathlib import Path
-
 
 # Create Blueprint
 pep = Blueprint('pep', __name__)

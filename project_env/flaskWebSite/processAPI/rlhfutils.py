@@ -1,10 +1,7 @@
 import torch
-from PIL import Image
-import torchvision.transforms as transforms
 from torch.utils.data import Dataset
 import numpy as np
 import torch
-import os
 import torch.nn as nn
 import torchvision.transforms.functional as TF
 
@@ -63,11 +60,36 @@ class CustomBBoxLoss(nn.Module):
 
         # Normalize the loss by the number of bounding boxes
         return loss / len(bbox_target_list)
-    
-import torch
-from torch.utils.data import Dataset
-import numpy as np
-from PIL import Image
+
+class OutsideLoss(nn.Module):
+    def __init__(self):
+        super(OutsideLoss, self).__init__()
+        self.l1_loss = nn.MSELoss() 
+
+    def forward(self, pred, bbox_target_list):
+        # Create a binary mask for bounding box areas
+        mask = torch.zeros_like(pred, dtype=torch.bool)  # Initialize mask with False (no areas selected)
+
+        for item in bbox_target_list:
+            # Extract bounding box coordinates
+            bbox = item['boundingBox']
+            x1, y1 = bbox['topLeftX'], bbox['topLeftY']
+            width, height = bbox['width'], bbox['height']
+
+            # Mark bounding box areas in the mask
+            mask[:, y1:y1+height, x1:x1+width] = True
+
+        # Create the complementary mask for areas outside the bounding boxes
+        outside_mask = ~mask
+
+        # Extract predictions and ground truth values for the outside regions
+        outside_pred = pred[outside_mask]
+        outside_target = pred[outside_mask].detach()  # Use current predictions as the "unchanged" target
+
+        # Compute L1 loss for the outside regions
+        loss_outside = self.l1_loss(outside_pred, outside_target)
+
+        return loss_outside
 
 class PlanDataset(Dataset):
     def __init__(self, images_list, transform=None):

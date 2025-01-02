@@ -45,12 +45,13 @@ def rlhf_process():
     aug_image, aug_bboxes_data = augment_img_bbox(original_image, extracted_data)
 
     images_list = [original_image, aug_image]   # Both are PIL Image objects
-    bboxes_list = [extracted_data, aug_bboxes_data]
+    bbox_list = [extracted_data, aug_bboxes_data]
+    pred_list = [pred_image, pred_image.rotate(90, expand=True)]
 
     dataset = PlanDataset(images_list, transform=None)
     train_dataloader = torch.utils.data.DataLoader(dataset, batch_size=1, shuffle=False)
     
-    train_start(model, train_dataloader, bboxes_list, torch.device('cpu'))
+    train_start(model, train_dataloader, pred_list, bbox_list, torch.device('cpu'))
 
     return jsonify({"success": True, "message": "Bounding box and label data extracted.", "data": extracted_data})
    

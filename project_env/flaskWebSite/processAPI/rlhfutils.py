@@ -63,32 +63,28 @@ class CustomBBoxLoss(nn.Module):
 class OutsideLoss(nn.Module):
     def __init__(self):
         super(OutsideLoss, self).__init__()
-        self.l1_loss = nn.MSELoss() 
+        self.l1_loss = nn.MSELoss()
 
-    def forward(self, pred, bbox_target_list):
-        # Create a binary mask for bounding box areas
-        mask = torch.zeros_like(pred, dtype=torch.bool)  # Initialize mask with False (no areas selected)
+    def forward(self, pred, pred_image, bbox_target_list):
+        pred_image = np.array(pred_image).astype(np.float32) / 255.0 * 4  # Normalize to range [0, 4]
+        if pred_image.ndim == 3 and pred_image.shape[2] == 3:
+            pred_image = pred_image[..., 0]  # Use one channel if RGB
+        pred_image_tensor = torch.from_numpy(pred_image).unsqueeze(0).unsqueeze(0).to(pred.device)  # Shape [1, 1, H, W]
+
+        mask = torch.zeros_like(pred, dtype=torch.bool)
 
         for item in bbox_target_list:
-            # Extract bounding box coordinates
             bbox = item['boundingBox']
-            x1, y1 = bbox['topLeftX'], bbox['topLeftY']
-            width, height = bbox['width'], bbox['height']
+            x1, y1 = int(bbox['topLeftX']), int(bbox['topLeftY'])
+            width, height = int(bbox['width']), int(bbox['height'])
+            mask[:, :, y1:y1 + height, x1:x1 + width] = True
 
-            # Mark bounding box areas in the mask
-            mask[:, y1:y1+height, x1:x1+width] = True
-
-        # Create the complementary mask for areas outside the bounding boxes
         outside_mask = ~mask
-
-        # Extract predictions and ground truth values for the outside regions
         outside_pred = pred[outside_mask]
-        outside_target = pred[outside_mask].detach()  # Use current predictions as the "unchanged" target
+        outside_target = pred_image_tensor[outside_mask]
 
-        # Compute L1 loss for the outside regions
-        loss_outside = self.l1_loss(outside_pred, outside_target)
+        return self.l1_loss(outside_pred, outside_target)
 
-        return loss_outside
 
 class PlanDataset(Dataset):
     def __init__(self, images_list, transform=None):
@@ -161,7 +157,7 @@ def augment_img_bbox(original_image, extracted_data):
         })
     return aug_image, aug_bboxes_data
 
-def train_start(model, train_dataloader, bboxes_list, device):
+def train_start(model, train_dataloader, pred_image, bboxes_list, device):
     criterion = CustomBBoxLoss()
     criterion_outside = OutsideLoss()
     optimizer = torch.optim.Adam(
@@ -178,6 +174,7 @@ def train_start(model, train_dataloader, bboxes_list, device):
             img_batch = img_batch.to(device) # move to the device
 
             bbox_targets = bboxes_list[idx] # bbox for the current image
+            pred_target = pred_image[idx] 
 
             optimizer.zero_grad() # reset gradients
 
@@ -185,9 +182,9 @@ def train_start(model, train_dataloader, bboxes_list, device):
 
             loss = criterion(pred, bbox_targets) # loss for boxes
     
-            loss_outside = criterion_outside(pred, bbox_targets) # loss for outside boxes
+            loss_outside = criterion_outside(pred, pred_target, bbox_targets) # loss for outside boxes
 
-            total_loss = loss + 0.1 * loss_outside # total loss
+            total_loss = loss + 2*loss_outside # total loss
             total_loss.backward()
             optimizer.step()
 

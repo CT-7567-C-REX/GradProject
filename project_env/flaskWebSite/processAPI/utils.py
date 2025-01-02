@@ -24,7 +24,7 @@ def convert_json_to_pil(json_data, image_key='image'):
     
 def convert_pil_to_base64(pil_image):
     buffered = BytesIO()
-    pil_image.save(buffered, format="PNG")  # You can choose PNG or JPEG depending on your needs
+    pil_image.save(buffered, format="PNG") 
     img_str = base64.b64encode(buffered.getvalue()).decode("utf-8")
     return img_str
 

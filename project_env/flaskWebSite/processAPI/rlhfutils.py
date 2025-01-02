@@ -5,7 +5,7 @@ import torchvision.transforms.functional as TF
 import albumentations as A
 from PIL import Image
 import numpy as np
-
+import random
 class CustomBBoxLoss(nn.Module):
     def __init__(self):
         super(CustomBBoxLoss, self).__init__()
@@ -20,35 +20,29 @@ class CustomBBoxLoss(nn.Module):
             4: (255, 255, 255), # Background
         }
 
-        # Find the class
         for class_id, mapped_color in color_mapping.items():
             if color == mapped_color:
                 return class_id
 
-        # Raise an error if no match
         raise ValueError(f"Color {color} does not match any known class.")
 
     def forward(self, pred, bbox_target_list):
         loss = 0.0
+        gradient_mask = torch.zeros_like(pred, dtype=torch.float32, device=pred.device)
 
         for item in bbox_target_list:
-            # Extract bounding box coordinates
             bbox = item['boundingBox']
             x1 = int(round(bbox['topLeftX']))
             y1 = int(round(bbox['topLeftY']))
             width = int(round(bbox['width']))
             height = int(round(bbox['height']))
 
-            # Parse and map the target color to its class
-            target_color = tuple(map(int, item['label'][1:-1].split(',')))  # Convert '(R,G,B)' to (R, G, B)
+            target_color = tuple(map(int, item['label'][1:-1].split(',')))
             target_class = self.get_the_class(target_color)
 
-            # Extract the corresponding region from the prediction
-            pred_region = TF.crop(pred, top=y1, left=x1, height=height, width=width) 
+            pred_region = TF.crop(pred, top=y1, left=x1, height=height, width=width)
+            pred_region = pred_region.squeeze(0)
 
-            pred_region = pred_region.squeeze(0) 
-
-            # Create the target tensor
             target_tensor = torch.full(
                 pred_region.shape,
                 target_class,
@@ -56,9 +50,15 @@ class CustomBBoxLoss(nn.Module):
                 device=pred_region.device
             )
 
-            loss += self.mse_loss(pred_region, target_tensor) # MSE loss for the current bbox
+            loss += self.mse_loss(pred_region, target_tensor)
 
-        return loss / len(bbox_target_list)  # Normalize loss, then return
+            # Update the gradient mask for this bounding box
+            gradient_mask[:, :, y1:y1 + height, x1:x1 + width] = 1.0
+
+        # Apply gradient masking
+        pred.register_hook(lambda grad: grad * gradient_mask)
+
+        return loss / len(bbox_target_list)
 
 class OutsideLoss(nn.Module):
     def __init__(self):
@@ -66,10 +66,10 @@ class OutsideLoss(nn.Module):
         self.l1_loss = nn.MSELoss()
 
     def forward(self, pred, pred_image, bbox_target_list):
-        pred_image = np.array(pred_image).astype(np.float32) / 255.0 * 4  # Normalize to range [0, 4]
+        pred_image = np.array(pred_image).astype(np.float32) / 255.0 * 4
         if pred_image.ndim == 3 and pred_image.shape[2] == 3:
-            pred_image = pred_image[..., 0]  # Use one channel if RGB
-        pred_image_tensor = torch.from_numpy(pred_image).unsqueeze(0).unsqueeze(0).to(pred.device)  # Shape [1, 1, H, W]
+            pred_image = pred_image[..., 0]
+        pred_image_tensor = torch.from_numpy(pred_image).unsqueeze(0).unsqueeze(0).to(pred.device)
 
         mask = torch.zeros_like(pred, dtype=torch.bool)
 
@@ -159,33 +159,44 @@ def augment_img_bbox(original_image, extracted_data):
 
 def train_start(model, train_dataloader, pred_image, bboxes_list, device):
     criterion = CustomBBoxLoss()
-    criterion_outside = OutsideLoss()
     optimizer = torch.optim.Adam(
         model.parameters(),
-        lr=5e-6,  # lowered for stability
+        lr=5e-6,
         betas=(0.9, 0.999),
     )
+
+    layers = [model.inc, model.down1, model.down2, model.up3, model.up4, model.out]
 
     model.train()
 
     for epoch in range(1):  # Single epoch
+        # Randomly freeze a subset of layers
+        layers_to_freeze = random.sample(layers, k=random.randint(1, len(layers) - 1))
+
+        for layer in layers:
+            requires_grad = layer not in layers_to_freeze
+            for param in layer.parameters():
+                param.requires_grad = requires_grad
+
         for idx, img_batch in enumerate(train_dataloader):
 
-            img_batch = img_batch.to(device) # move to the device
+            img_batch = img_batch.to(device)  # Move to the device
 
-            bbox_targets = bboxes_list[idx] # bbox for the current image
-            pred_target = pred_image[idx] 
+            bbox_targets = bboxes_list[idx]  # bbox for the current image
+            pred_target = pred_image[idx]
 
-            optimizer.zero_grad() # reset gradients
+            optimizer.zero_grad()  # Reset gradients
 
-            pred = model(img_batch) # make a prediction
+            pred = model(img_batch)  # Make a prediction
 
-            loss = criterion(pred, bbox_targets) # loss for boxes
-    
-            loss_outside = criterion_outside(pred, pred_target, bbox_targets) # loss for outside boxes
+            loss = criterion(pred, bbox_targets)  # Loss for boxes
 
-            total_loss = loss + 2*loss_outside # total loss
+            total_loss = loss  # Total loss
             total_loss.backward()
             optimizer.step()
 
             print(f"Epoch {epoch + 1}, Batch {idx + 1}, Loss: {loss.item()}")
+
+    # Unfreeze all layers after training
+    for param in model.parameters():
+        param.requires_grad = True

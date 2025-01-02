@@ -159,6 +159,7 @@ def augment_img_bbox(original_image, extracted_data):
 
 def train_start(model, train_dataloader, pred_image, bboxes_list, device):
     criterion = CustomBBoxLoss()
+    criterion_outside = OutsideLoss()
     optimizer = torch.optim.Adam(
         model.parameters(),
         lr=5e-6,
@@ -190,8 +191,10 @@ def train_start(model, train_dataloader, pred_image, bboxes_list, device):
             pred = model(img_batch)  # Make a prediction
 
             loss = criterion(pred, bbox_targets)  # Loss for boxes
+            loss_outside = criterion_outside(pred, pred_target, bbox_targets) # loss for outside boxes
 
-            total_loss = loss  # Total loss
+
+            total_loss = loss * loss_outside # total loss # Total loss
             total_loss.backward()
             optimizer.step()
 

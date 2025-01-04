@@ -194,7 +194,7 @@ def train_start(model, train_dataloader, pred_image, bboxes_list, device):
             loss_outside = criterion_outside(pred, pred_target, bbox_targets) # loss for outside boxes
 
 
-            total_loss = loss * loss_outside # total loss # Total loss
+            total_loss = loss + loss_outside # total loss # Total loss
             total_loss.backward()
             optimizer.step()
 

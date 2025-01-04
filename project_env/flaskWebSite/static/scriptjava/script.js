@@ -16,37 +16,40 @@ let { canvas, rectangleTool } = setupCanvas("canvas");
 /**
  * Upload Form for Prediction
  */
+// Extracted function to handle image upload and prediction
+async function handleImageUploadAndPrediction() {
+  const fileInput = document.getElementById("img"); // Form image data
+  const statusElement = document.getElementById("status");
+
+  statusElement.textContent = "Uploading..."; // Set the status
+
+  if (fileInput.files.length === 0) {
+    statusElement.textContent = "Please select an image.";
+    return;
+  }
+
+  try {
+    const payload = await formDataToJson(fileInput); // Convert form data to JSON
+    const data = await sendToEndpoint("/prediction", payload); // Send data to server
+    const predictedImageBase64 = data.image; // Server results
+
+    predimage = "data:image/png;base64," + predictedImageBase64;
+    statusElement.textContent = "Upload successful!";
+
+    // Set the predicted image as the background of the canvas
+    setCanvasBackground(canvas, predimage);
+  } catch (error) {
+    statusElement.textContent = "Error: " + error.message;
+  }
+}
+
 function initializeUploadForm() {
   const uploadForm = document.getElementById("uploadForm");
   if (!uploadForm) return; // Exit if the form doesn't exist
 
-  const statusElement = document.getElementById("status");
-
   uploadForm.addEventListener("submit", async function (event) {
     event.preventDefault(); // Stop form from refreshing the page
-
-    const fileInput = document.getElementById("img"); // Form image data
-
-    statusElement.textContent = "Uploading..."; // Set the status
-
-    if (fileInput.files.length === 0) {
-      statusElement.textContent = "Please select an image.";
-      return;
-    }
-
-    try {
-      const payload = await formDataToJson(fileInput); // Convert form data to JSON
-      const data = await sendToEndpoint("/prediction", payload); // Send data to server
-      const predictedImageBase64 = data.image; // Server results
-
-      predimage = "data:image/png;base64," + predictedImageBase64;
-      statusElement.textContent = "Upload successful!";
-
-      // Set the predicted image as the background of the canvas
-      setCanvasBackground(canvas, predimage);
-    } catch (error) {
-      statusElement.textContent = "Error: " + error.message;
-    }
+    await handleImageUploadAndPrediction();
   });
 }
 
@@ -74,6 +77,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
         if (response.success) {
           statusElement.textContent = "Process completed successfully!";
+          
+          // Automatically trigger a new prediction
+          await handleImageUploadAndPrediction();
         } else {
           statusElement.textContent = "Processing failed. Please try again.";
         }
@@ -87,6 +93,7 @@ document.addEventListener("DOMContentLoaded", () => {
     );
   }
 });
+
 
 // Clear Canvas
 const clearEl = document.getElementById("clear-canvas");

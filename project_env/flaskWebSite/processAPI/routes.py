@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-from flaskWebSite.processAPI.utils import convert_json_to_pil, model_loader, generate, convert_pil_to_base64
+from flaskWebSite.processAPI.utils import convert_json_to_pil, model_loader, generate, convert_pil_to_base64, save_model
 from flaskWebSite.processAPI.rlhfutils import PlanDataset, train_start, augment_img_bbox
 from pathlib import Path
 import torch
@@ -10,13 +10,14 @@ import base64
 # Create Blueprint
 pep = Blueprint('pep', __name__)
 
-base_dir = Path(__file__).resolve().parents[1] 
-  
+base_dir = Path(__file__).resolve().parents[1]
+model_path = base_dir / "modelsTrained"
+
 from flaskWebSite.modelARCH.vgg19 import VGGUNET19
 model = VGGUNET19()
+model = model_loader(model, model_path / "Daft.pth.tar")
 
-model_path = base_dir / "modelsTrained" / "Daft.pth.tar"
-model = model_loader(model, model_path)
+feedback_counter = 0
 
 # get a prediction
 @pep.route('/prediction', methods=['GET', 'POST'])
@@ -33,7 +34,7 @@ def prediction():
 
 @pep.route('/rlhfprocess', methods=['POST'])
 def rlhf_process():
-
+    global feedback_counter
     data = request.get_json()# JSON data
     
     rectangles = data.get('rectangles', [])# Extract bbox
@@ -52,6 +53,13 @@ def rlhf_process():
     train_dataloader = torch.utils.data.DataLoader(dataset, batch_size=1, shuffle=False)
     
     train_start(model, train_dataloader, pred_list, bbox_list, torch.device('cpu'))
+
+    feedback_counter += 1
+
+    # Save model every 10 requests
+    if feedback_counter % 10 == 0:
+        save_model(model, model_path, feedback_counter)
+
 
     return jsonify({"success": True, "message": "Bounding box and label data extracted.", "data": extracted_data})
    

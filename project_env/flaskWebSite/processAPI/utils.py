@@ -3,6 +3,7 @@ from io import BytesIO
 import base64
 import numpy as np
 import torch
+import os
 import torchvision.transforms as transforms
 
 def convert_json_to_pil(json_data, image_key='image'):
@@ -76,3 +77,12 @@ def generate(image, model):
     output_image_pil = visualize_output(output)
     
     return output_image_pil
+
+def save_model(model, root_folder, iteration):
+
+    os.makedirs(root_folder, exist_ok=True)
+    model_full_path = os.path.join(root_folder, f'after{iteration}feedback.pth.tar')
+    
+    torch.save({
+        'model_state_dict': model.state_dict(),
+    }, model_full_path)

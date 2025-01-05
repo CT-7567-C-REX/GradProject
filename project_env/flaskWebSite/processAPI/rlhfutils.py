@@ -14,8 +14,8 @@ class CustomBBoxLoss(nn.Module):
     def get_the_class(self, color):
         color_mapping = {
             0: (0, 0, 0),       # Walls
-            1: (255, 80, 80),   # Iwan
-            2: (80, 80, 255),   # Room
+            1: (80, 80, 255),   # Iwan
+            2: (255, 80, 80),   # Room
             3: (255, 255, 0),   # Stairs
             4: (255, 255, 255), # Background
         }

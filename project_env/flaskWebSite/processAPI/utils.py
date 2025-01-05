@@ -43,11 +43,11 @@ def model_loader (model, model_path):
 # Visualize output
 def visualize_output(predictions, from_tensor=True):
     color_mapping = {
-        0: (0, 0, 0),
-        1: (255, 80, 80),
-        2: (80, 80, 255),
-        3: (255, 255, 0),
-        4: (255, 255, 255),  
+        0: (0, 0, 0),       # Walls
+        1: (80, 80, 255),   # Iwan
+        2: (255, 80, 80),   # Room
+        3: (255, 255, 0),   # Stairs
+        4: (255, 255, 255), # Background  
     }
     
     if from_tensor:

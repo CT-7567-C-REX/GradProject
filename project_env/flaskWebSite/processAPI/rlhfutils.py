@@ -170,7 +170,7 @@ def train_start(model, train_dataloader, pred_image, bboxes_list, device):
 
     model.train()
 
-    for epoch in range(1):  # Single epoch
+    for epoch in range(2):  # Single epoch
         # Randomly freeze a subset of layers
         layers_to_freeze = random.sample(layers, k=random.randint(1, len(layers) - 1))
 

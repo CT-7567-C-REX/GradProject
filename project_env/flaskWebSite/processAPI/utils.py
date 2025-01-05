@@ -44,8 +44,8 @@ def model_loader (model, model_path):
 def visualize_output(predictions, from_tensor=True):
     color_mapping = {
         0: (0, 0, 0),       # Walls
-        1: (80, 80, 255),   # Iwan
-        2: (255, 80, 80),   # Room
+        1: (80, 80, 255),   # Room
+        2: (255, 80, 80),   # Iwan
         3: (255, 255, 0),   # Stairs
         4: (255, 255, 255), # Background  
     }

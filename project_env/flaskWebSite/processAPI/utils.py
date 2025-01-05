@@ -63,8 +63,7 @@ def visualize_output(predictions, from_tensor=True):
 
 
 # Generate function
-def generate(image, model):
-    device = torch.device('cpu')
+def generate(image, model, device):
 
     model = model.to(device)
 

@@ -18,6 +18,14 @@ model = VGGUNET19()
 model = model_loader(model, model_path / "DaftNew.pth.tar")
 
 feedback_counter = 0
+# assign device mps or cuda or cpu
+if torch.cuda.is_available():
+    device = torch.device('cuda')
+elif torch.backends.mps.is_available():
+    device = torch.device('mps')
+else:
+    device = torch.device('cpu')
+print(f"Device: {device}")
 
 # get a prediction
 @pep.route('/prediction', methods=['GET', 'POST'])
@@ -26,7 +34,7 @@ def prediction():
 
     image = convert_json_to_pil(data)
 
-    output_image = generate(image, model)
+    output_image = generate(image, model, device)
 
     output_base64 = convert_pil_to_base64(output_image)
 
@@ -52,7 +60,7 @@ def rlhf_process():
     dataset = PlanDataset(images_list, transform=None)
     train_dataloader = torch.utils.data.DataLoader(dataset, batch_size=1, shuffle=False)
     
-    train_start(model, train_dataloader, pred_list, bbox_list, torch.device('cpu'))
+    train_start(model, train_dataloader, pred_list, bbox_list, device)
 
     feedback_counter += 1
 
@@ -61,5 +69,5 @@ def rlhf_process():
         save_model(model, model_path, feedback_counter)
 
 
-    return jsonify({"success": True, "message": "Bounding box and label data extracted.", "data": extracted_data})
+    return jsonify({"success": True, "message": "Bounding box fed to the model."})
    

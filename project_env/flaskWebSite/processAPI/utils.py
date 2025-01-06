@@ -4,7 +4,10 @@ import base64
 import numpy as np
 import torch
 import os
+from pathlib import Path
 import torchvision.transforms as transforms
+from flaskWebSite.processAPI.utils_eval import eval_datasets, eval_fn
+from torch.utils.data import DataLoader
 
 def convert_json_to_pil(json_data, image_key='image'):
     try:
@@ -77,11 +80,16 @@ def generate(image, model, device):
     
     return output_image_pil
 
-def save_model(model, root_folder, iteration):
+def save_model(model, root_folder, iteration, device):
 
     os.makedirs(root_folder, exist_ok=True)
     model_full_path = os.path.join(root_folder, f'after{iteration}feedback.pth.tar')
-    
+    base_dir = Path(__file__).resolve().parents[0]
+    test_set = base_dir / "test"
+    dataset = eval_datasets(directory=test_set)
+    dataloader = DataLoader(dataset, batch_size=4, shuffle=False) 
+    eval_loss, eval_miou, eval_acc = eval_fn(model, dataloader, device)
+    print(f"Eval Loss: {eval_loss}, Eval mIoU: {eval_miou}, Eval Acc: {eval_acc}")
     torch.save({
         'model_state_dict': model.state_dict(),
     }, model_full_path)

@@ -3,6 +3,7 @@ import numpy as np
 import torch
 import os
 from torch.utils.data import Dataset
+from torch import nn
 
 class eval_datasets(Dataset):
     def __init__(self, directory):
@@ -105,12 +106,17 @@ def check_acc(img, mask, model, device):
 def eval_fn(
     model,
     dataloader,
-    criterion,
     device,
-    color_mapping,
 ):
     model.eval()
-    
+    criterion = nn.MSELoss()
+    color_mapping = {
+        0: (0, 0, 0),       # Walls
+        1: (80, 80, 255),   # Room
+        2: (255, 80, 80),   # Iwan
+        3: (255, 255, 0),   # Stairs
+        4: (255, 255, 255), # Background  
+    }
     # Average Loss and mIoU
     avg_loss = []
     avg_mIoU = []
@@ -125,15 +131,15 @@ def eval_fn(
         plan = plan.to(device)
         mask = mask.to(device)
         
-        # Forward pass with mixed precision
-        with torch.autocast(device_type=device, dtype=torch.float16):
-            # Accuracy
-            num_correct, num_pixel = check_acc(plan, mask, model, device)
-            total_correct += num_correct
-            total_pixel += num_pixel
-            pred_mask = model(plan)
-            loss = criterion(pred=pred_mask, mask=mask)
+        # Forward pass without mixed precision
+        pred_mask = model(plan)
+        loss = criterion(pred_mask, mask)
         
+        # Accuracy
+        num_correct, num_pixel = check_acc(plan, mask, model, device)
+        total_correct += num_correct
+        total_pixel += num_pixel
+
         # mIoU
         miou = calculate_miou(pred_mask, mask, color_mapping)
         

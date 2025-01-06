@@ -66,7 +66,7 @@ def rlhf_process():
 
     # Save model every 10 requests
     if feedback_counter % 10 == 0:
-        save_model(model, model_path, feedback_counter)
+        save_model(model, model_path, feedback_counter, device)
 
 
     return jsonify({"success": True, "message": "Bounding box fed to the model."})

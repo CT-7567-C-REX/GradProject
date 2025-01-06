@@ -18,13 +18,15 @@ model = VGGUNET19()
 model = model_loader(model, model_path / "DaftNew.pth.tar")
 
 feedback_counter = 0
-# assign device mps or cuda or cpu
+#assign device mps or cuda or cpu
 if torch.cuda.is_available():
     device = torch.device('cuda')
 elif torch.backends.mps.is_available():
     device = torch.device('mps')
 else:
     device = torch.device('cpu')
+#device = torch.device('cpu')
+
 print(f"Device: {device}")
 
 # get a prediction
@@ -65,7 +67,7 @@ def rlhf_process():
     feedback_counter += 1
 
     # Save model every 10 requests
-    if feedback_counter % 10 == 0:
+    if feedback_counter % 1 == 0:
         save_model(model, model_path, feedback_counter, device)
 
 

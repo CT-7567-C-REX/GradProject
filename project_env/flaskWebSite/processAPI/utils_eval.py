@@ -131,14 +131,14 @@ def eval_fn(
         plan = plan.to(device)
         mask = mask.to(device)
         
-        # Forward pass without mixed precision
-        pred_mask = model(plan)
-        loss = criterion(pred_mask, mask)
-        
-        # Accuracy
-        num_correct, num_pixel = check_acc(plan, mask, model, device)
-        total_correct += num_correct
-        total_pixel += num_pixel
+       # Forward pass with mixed precision
+        with torch.autocast(device_type=device, dtype=torch.float16):
+            # Accuracy
+            num_correct, num_pixel = check_acc(plan, mask, model, device)
+            total_correct += num_correct
+            total_pixel += num_pixel
+            pred_mask = model(plan)
+            loss = criterion(pred_mask, mask)
 
         # mIoU
         miou = calculate_miou(pred_mask, mask, color_mapping)

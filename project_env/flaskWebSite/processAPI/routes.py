@@ -20,11 +20,11 @@ model = model_loader(model, model_path / "DaftNew.pth.tar")
 feedback_counter = 0
 #assign device mps or cuda or cpu
 if torch.cuda.is_available():
-    device = torch.device('cuda')
+    device = 'cuda'
 elif torch.backends.mps.is_available():
-    device = torch.device('mps')
+    device = 'mps'
 else:
-    device = torch.device('cpu')
+    device = 'cpu'
 #device = torch.device('cpu')
 
 print(f"Device: {device}")

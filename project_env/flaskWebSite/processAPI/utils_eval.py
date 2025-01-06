@@ -147,4 +147,5 @@ def eval_fn(
         avg_mIoU.append(miou.item())
 
     acc = 100 * (total_correct / total_pixel) if total_pixel > 0 else 0
+    model.train()
     return compute_avg(avg_loss), compute_avg(avg_mIoU), acc

@@ -167,7 +167,7 @@ def train_start(model, train_dataloader, pred_image, bboxes_list, device):
     )
 
     layers = [model.inc, model.down1, model.down2, model.up3, model.up4, model.out]
-
+    model = model.to(device)
     model.train()
 
     for epoch in range(2):  # Single epoch

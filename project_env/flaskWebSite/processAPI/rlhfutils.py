@@ -49,11 +49,11 @@ class CustomBBoxLoss(nn.Module):
                 dtype=pred_region.dtype,
                 device=pred_region.device
             )
-
-            loss += self.mse_loss(pred_region, target_tensor)
+            alpha = 50.0
+            loss += alpha * self.mse_loss(pred_region, target_tensor)
 
             # Update the gradient mask for this bounding box
-            gradient_mask[:, :, y1:y1 + height, x1:x1 + width] = 1.0
+            gradient_mask[:, :, y1:y1 + height, x1:x1 + width] = 10.0
 
         # Apply gradient masking
         pred.register_hook(lambda grad: grad * gradient_mask)
@@ -162,7 +162,7 @@ def train_start(model, train_dataloader, pred_image, bboxes_list, device):
     criterion_outside = OutsideLoss()
     optimizer = torch.optim.Adam(
         model.parameters(),
-        lr=5e-6,
+        lr=1e-6,
         betas=(0.9, 0.999),
     )
 

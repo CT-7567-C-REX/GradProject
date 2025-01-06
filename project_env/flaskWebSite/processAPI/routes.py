@@ -15,7 +15,7 @@ model_path = base_dir / "modelsTrained"
 
 from flaskWebSite.modelARCH.vgg19 import VGGUNET19
 model = VGGUNET19()
-model = model_loader(model, model_path / "DaftNew.pth.tar")
+model = model_loader(model, model_path / "Daft_Segmentation_best2.pth.tar")
 
 feedback_counter = 0
 #assign device mps or cuda or cpu
@@ -67,7 +67,7 @@ def rlhf_process():
     feedback_counter += 1
 
     # Save model every 10 requests
-    if feedback_counter % 1 == 0:
+    if feedback_counter % 10 == 0:
         save_model(model, model_path, feedback_counter, device)
 
 

@@ -15,7 +15,7 @@ model_path = base_dir / "modelsTrained"
 
 from flaskWebSite.modelARCH.vgg19 import VGGUNET19
 model = VGGUNET19()
-model = model_loader(model, model_path / "Daft_Segmentation_best2.pth.tar")
+model = model_loader(model, model_path / "DaftNew.pth.tar")
 
 feedback_counter = 0
 #assign device mps or cuda or cpu

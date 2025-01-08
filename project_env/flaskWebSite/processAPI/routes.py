@@ -67,7 +67,7 @@ def rlhf_process():
     feedback_counter += 1
 
     # Save model every 10 requests
-    if feedback_counter % 10 == 0:
+    if feedback_counter % 5 == 0:
         save_model(model, model_path, feedback_counter, device)
 
 

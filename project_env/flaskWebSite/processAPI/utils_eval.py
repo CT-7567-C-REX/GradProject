@@ -82,34 +82,15 @@ def calculate_iou(prediction, target, class_label):
 
     return iou
 
-def check_acc(img, mask, model, device):
-    num_correct = 0
-    num_pixel = 0
-    
-    model.eval()
-    
-    with torch.no_grad():
-        img = img.to(device)
-        mask = mask.to(device)
-            
-        preds = model(img)
-        preds = torch.round(preds)
-            
-        num_correct += (preds == mask).sum()
-        num_pixel += torch.numel(preds)
-            
-    acc = num_correct/num_pixel*100
-    
-    return num_correct, num_pixel
-
 @torch.no_grad()
-def eval_fn(
-    model,
-    dataloader,
-    device,
-):
-    model.eval()
+def eval_fn(model, dataloader, device):
+    
     criterion = nn.MSELoss()
+    total_correct = 0
+    total_pixels = 0
+    avgloss = []
+    miou_values = []
+    compute_avg = lambda x: sum(x) / len(x) if x else 0
     color_mapping = {
         0: (0, 0, 0),       # Walls
         1: (80, 80, 255),   # Room
@@ -117,15 +98,6 @@ def eval_fn(
         3: (255, 255, 0),   # Stairs
         4: (255, 255, 255), # Background  
     }
-    # Average Loss and mIoU
-    avg_loss = []
-    avg_mIoU = []
-    
-    # Accuracy
-    total_correct = 0
-    total_pixel = 0
-
-    compute_avg = lambda x: sum(x) / len(x) if x else 0
     
     for plan, mask in dataloader:
         plan = plan.to(device)
@@ -133,19 +105,19 @@ def eval_fn(
         
        # Forward pass with mixed precision
         with torch.autocast(device_type=device, dtype=torch.float16):
-            # Accuracy
-            num_correct, num_pixel = check_acc(plan, mask, model, device)
-            total_correct += num_correct
-            total_pixel += num_pixel
-            pred_mask = model(plan)
+            # Get model prediction
+            pred_mask = model(plan)  # Shape: [batch_size, 1, 512, 512]
             loss = criterion(pred_mask, mask)
+            avgloss.append(loss.item())
+            
+            # Round the predictions and calculate correct pixels
+            pred_mask = torch.round(pred_mask)
+            total_correct += (pred_mask == mask).sum().item()
+            total_pixels += torch.numel(pred_mask)
 
-        # mIoU
-        miou = calculate_miou(pred_mask, mask, color_mapping)
-        
-        avg_loss.append(loss.item())
-        avg_mIoU.append(miou.item())
+            # Compute mIoU for this batch
+            batch_miou = calculate_miou(pred_mask, mask, color_mapping)
+            miou_values.append(batch_miou)
 
-    acc = 100 * (total_correct / total_pixel) if total_pixel > 0 else 0
-    model.train()
-    return compute_avg(avg_loss), compute_avg(avg_mIoU), acc
+    avg_acc = (total_correct / total_pixels) * 100
+    return compute_avg(avgloss), compute_avg(miou_values), avg_acc

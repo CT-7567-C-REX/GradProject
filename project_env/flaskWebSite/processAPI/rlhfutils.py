@@ -53,7 +53,7 @@ class CustomBBoxLoss(nn.Module):
             loss += alpha * self.mse_loss(pred_region, target_tensor)
 
             # Update the gradient mask for this bounding box
-            gradient_mask[:, :, y1:y1 + height, x1:x1 + width] = 10.0
+            gradient_mask[:, :, y1:y1 + height, x1:x1 + width] = 1.0
 
         # Apply gradient masking
         pred.register_hook(lambda grad: grad * gradient_mask)

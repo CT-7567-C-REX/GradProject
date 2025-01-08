@@ -167,17 +167,22 @@ def train_start(model, train_dataloader, pred_image, bboxes_list, device):
     )
 
     layers = [model.inc, model.down1, model.down2, model.up3, model.up4, model.out]
+    frozen_layers = set()
     model = model.to(device)
     model.train()
 
     for epoch in range(2):  # Single epoch
-        # Randomly freeze a subset of layers
-        layers_to_freeze = random.sample(layers, k=random.randint(1, len(layers) - 1))
+        # Randomly pick 1-4 layers to freeze (excluding already frozen ones)
+        num_to_freeze = random.randint(1, min(4, len(layers) - len(frozen_layers)))
+        layers_to_freeze = random.sample([layer for layer in layers if layer not in frozen_layers], k=num_to_freeze)
 
-        for layer in layers:
-            requires_grad = layer not in layers_to_freeze
+        # Add newly frozen layers to the frozen set
+        frozen_layers.update(layers_to_freeze)
+
+        # Freeze the selected layers
+        for layer in frozen_layers:
             for param in layer.parameters():
-                param.requires_grad = requires_grad
+                param.requires_grad = False
 
         for idx, img_batch in enumerate(train_dataloader):
 

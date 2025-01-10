@@ -15,7 +15,7 @@ model_path = base_dir / "modelsTrained"
 
 from flaskWebSite.modelARCH.vgg19 import VGGUNET19
 model = VGGUNET19()
-#model = model_loader(model, model_path / "after230feedback.pth.tar")
+#model = model_loader(model, model_path / "after45feedback.pth.tar")
 model = model_loader(model, model_path / "dafttrial.pth.tar")
 
 feedback_counter = 0
@@ -67,8 +67,8 @@ def rlhf_process():
 
     feedback_counter += 1
 
-    # Save model every 10 requests
-    if feedback_counter % 5 == 0:
+    # Save model every 1 requests
+    if feedback_counter % 1 == 0:
         save_model(model, model_path, feedback_counter, device)
 
 

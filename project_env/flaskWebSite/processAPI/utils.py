@@ -89,21 +89,32 @@ def save_model(model, root_folder, iteration, device):
     metrics_file_path = base_dir / "evaluation_metrics.txt"
     if not metrics_file_path.exists():
         metrics_file_path.touch() 
-    test_set = base_dir / "test"
-    dataset = eval_datasets(directory=test_set)
-    dataloader = DataLoader(dataset, batch_size=4, shuffle=False)
+    test_set_small = base_dir / "test"
+    test_set_all = base_dir / "testV2"
+    dataset = eval_datasets(directory=test_set_small)
+    dataset_all = eval_datasets(directory=test_set_all)
+    dataloader = DataLoader(dataset, batch_size=4)
+    dataloader_all = DataLoader(dataset_all, batch_size=4)
     eval_loss, eval_miou, eval_acc = eval_fn(model, dataloader, device)
+    eval_loss_all, eval_miou_all, eval_acc_all = eval_fn(model, dataloader_all, device)
     eval_loss = float(eval_loss)
     eval_miou = float(eval_miou)
     eval_acc = float(eval_acc)
-    torch.save({
-        'model_state_dict': model.state_dict(),
-    }, model_full_path)
+    eval_loss_all = float(eval_loss_all)
+    eval_miou_all = float(eval_miou_all)
+    eval_acc_all = float(eval_acc_all)
+    if iteration % 15 == 0:
+        torch.save({
+            'model_state_dict': model.state_dict(),
+        }, model_full_path)
     metrics = {
         "iteration": iteration,
         "eval_loss": eval_loss,
         "eval_miou": eval_miou,
-        "eval_acc": eval_acc
+        "eval_acc": eval_acc,
+        "eval_loss_all": eval_loss_all,
+        "eval_miou_all": eval_miou_all,
+        "eval_acc_all": eval_acc_all
     }
     with open(metrics_file_path, "a") as f:
         f.write(json.dumps(metrics) + "\n")

@@ -162,7 +162,7 @@ def train_start(model, train_dataloader, pred_image, bboxes_list, device):
     criterion_outside = OutsideLoss()
     optimizer = torch.optim.Adam(
         model.parameters(),
-        lr=2e-6,
+        lr=1e-6,
         betas=(0.9, 0.999),
     )
 

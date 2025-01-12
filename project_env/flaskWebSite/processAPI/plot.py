@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 
 # Define the file path using pathlib
-file_path = Path(__file__).parent / 'evaluation_metricsO.txt'
+file_path = Path(__file__).parent / 'evaluation_metrics.txt'
 
 # Load the file and parse JSON lines
 data = []
